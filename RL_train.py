@@ -11,8 +11,8 @@ from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.models import ModelCatalog
 from ray.rllib.evaluation.episode import Episode
 
-from custom_torch_model import CustomFCNet
-from action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
+from scripts.model.custom_torch_model import CustomFCNet
+from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
 
 from torch.utils.tensorboard import SummaryWriter

@@ -1,3 +1,0 @@
-from rsoccer_gym.ssl.ssl_go_to_ball.ssl_gym_go_to_ball import SSLGoToBallEnv
-from rsoccer_gym.ssl.ssl_go_to_ball.ssl_gym_go_to_ball_ir import SSLGoToBallIREnv
-from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv

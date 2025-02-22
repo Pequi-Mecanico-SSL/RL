@@ -1,17 +1,15 @@
 import yaml
 
 import ray
-from ray import air, tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.models import ModelCatalog
-import os
 import numpy as np
 
-from custom_torch_model import CustomFCNet
-from action_dists import TorchBetaTest, TorchBetaTest_blue, TorchBetaTest_yellow
-from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
-import time
-import random
+from scripts.model.custom_torch_model import CustomFCNet
+from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
+from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+
+from rewards import REWARDS
 
 ray.init()
 
@@ -37,8 +35,8 @@ configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
 configs["env_config"] = file_configs["env"]
 #configs["env_config"]["init_pos"]["ball"] = [random.uniform(-2, 2), random.uniform(-1.2, 1.2)]
-tune.registry._unregister_all()
-tune.registry.register_env("Soccer", create_rllib_env)
+ray.tune.registry._unregister_all()
+ray.tune.registry.register_env("Soccer", create_rllib_env)
 temp_env = create_rllib_env(configs["env_config"])
 obs_space = temp_env.observation_space["blue_0"]
 act_space = temp_env.action_space["blue_0"]
@@ -64,6 +62,7 @@ configs["model"] = {
     "custom_action_dist": "beta_dist",
 }
 configs["env"] = "Soccer"
+configs["rewards"] = REWARDS
 
 agent = PPOConfig.from_dict(configs).build()
 

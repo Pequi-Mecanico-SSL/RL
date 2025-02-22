@@ -5,8 +5,8 @@ from ray.rllib.algorithms.ppo import PPOConfig
 from ray import air, tune
 from ray.rllib.models import ModelCatalog
 
-from custom_torch_model import CustomFCNet
-from action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
+from scripts.model.custom_torch_model import CustomFCNet
+from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
 
 import numpy as np
