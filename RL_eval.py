@@ -9,7 +9,7 @@ from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
 
-from rewards import REWARDS
+from rewards import DENSE_REWARDS, SPARSE_REWARDS
 
 ray.init()
 
@@ -62,13 +62,14 @@ configs["model"] = {
     "custom_action_dist": "beta_dist",
 }
 configs["env"] = "Soccer"
-configs["rewards"] = REWARDS
 
 agent = PPOConfig.from_dict(configs).build()
 
 agent.restore(CHECKPOINT_PATH)
 
 configs["env_config"]["match_time"] = 40
+configs["env_config"]["dense_rewards"] = DENSE_REWARDS
+configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
 env = SSLMultiAgentEnv(**configs["env_config"])
 obs, *_ = env.reset()
 

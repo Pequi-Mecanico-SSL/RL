@@ -153,10 +153,15 @@ def r_def(field, frame, last_frame, **kwargs):
     
     return reward
 
-REWARDS = [
+DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
     (0.7, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
     (0.1, r_off,   []),
     (0.1, r_def,   []),
 ]
+
+SPARSE_REWARDS = {
+    "GOAL_REWARD": 10, # robot that scored gets this reward and the other team gets negative this reward
+    "OUTSIDE_REWARD": -10 # every robot (both teams) get this reward if the ball is outside the field
+}

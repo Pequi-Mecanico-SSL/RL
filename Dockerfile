@@ -23,35 +23,36 @@ RUN apt-get update && \
     mesa-utils \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
+
 # Copie o arquivo requirements.txt para o contêiner
 COPY requirements.txt .
 
 # Instale as dependências do Python listadas em requirements.txt
 RUN pip install --no-cache-dir setuptools==65.5.0 pip==21 wheel==0.38.0
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
 
 # Instalar rSim
 RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
 
 RUN mkdir videos
-COPY record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
-COPY video_recorder.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/monitoring/video_recorder.py
+RUN mkdir /ws/scripts
+COPY scripts/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
+COPY scripts/gymnasium/video_recorder.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/monitoring/video_recorder.py
 
 # Copy the rSoccer directory
-RUN mkdir /rsoccer_gym
-COPY rsoccer_gym rsoccer_gym
+RUN mkdir /ws/rSoccer
+COPY rSoccer /ws/rSoccer
+RUN cd /ws/rSoccer && pip install .
 
-COPY rllib_multiagent.py .
-COPY action_dists.py .
-COPY custom_torch_model.py .
+COPY RL_train.py .
+COPY RL_eval.py .
 COPY config.yaml .
-COPY render_episode.py .
-COPY sim2real /ws/sim2real
-COPY sim2real.py .
+COPY rewards.py .
+# COPY sim2real /ws/sim2real
+# COPY sim2real.py .
 
 RUN mkdir /ws/volume
-RUN mkdir /ws/scripts
 
 # Iniciar o contêiner com o bash
 CMD ["/bin/bash"]
