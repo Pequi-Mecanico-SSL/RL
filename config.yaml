@@ -51,7 +51,7 @@ env:
       2: [ 2.0,  1.0,  180.0]
       3: [ 2.0, -1.0,  180.0]
     ball: [0, 0]
-  field_type: 0
+  field_type: 1
   fps: 30 # frames por segundo
   match_time: 40 # duração da partida em segundos
   render_mode: "human"

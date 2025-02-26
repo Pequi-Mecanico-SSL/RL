@@ -1,6 +1,7 @@
 import numpy as np
 from rSoccer.rsoccer_gym.Entities import Frame, Field
 from rSoccer.rsoccer_gym.Utils import Geometry2D
+from collections import namedtuple
 # kwargs vai ter kick_speed_x, fps, 
 
 
@@ -55,10 +56,7 @@ def r_dist(field: Field, frame: Frame, last_frame: Frame, **kwargs):
         robots_left, robots_right = robots_right, robots_left
 
     ball = frame.ball
-    geometry = Geometry2D(
-        x_range=(-field.length/2, field.length/2),
-        y_range=(-field.goal_width/2, field.goal_width/2),
-    )
+    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
     max_dist = 2.5 # this is to put a limit on the reward
 
     min_dist_left = max_dist
@@ -90,12 +88,10 @@ def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
         robots_left, robots_right = robots_right, robots_left
 
     ball = frame.ball
-    goal_right = np.array([ 0.2 + field.length/2, 0])
-    goal_left  = np.array([-0.2 - field.length/2, 0])
-    geometry = Geometry2D(
-        x_range=(-field.length/2, field.length/2),
-        y_range=(-field.goal_width/2, field.goal_width/2),
-    )
+    goal_template = namedtuple('goal', ['x', 'y'])
+    goal_right = goal_template(x=0.2 + field.length/2, y=0)
+    goal_left  = goal_template(x=-0.2 - field.length/2, y=0)
+    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
     
     left_robots_angle = []
     for idx in range(len(robots_right)):
@@ -126,12 +122,10 @@ def r_def(field, frame, last_frame, **kwargs):
         robots_left, robots_right = robots_right, robots_left
 
     ball = frame.ball
-    goal_right = np.array([ 0.2 + field.length/2, 0])
-    goal_left  = np.array([-0.2 - field.length/2, 0])
-    geometry = Geometry2D(
-        x_range=(-field.length/2, field.length/2),
-        y_range=(-field.goal_width/2, field.goal_width/2),
-    )
+    goal_template = namedtuple('goal', ['x', 'y'])
+    goal_right = goal_template(x= 0.2 + field.length/2, y= 0)
+    goal_left  = goal_template(x=-0.2 - field.length/2, y= 0)
+    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
     
     left_robots_angle = []
     for idx in range(len(robots_right)):

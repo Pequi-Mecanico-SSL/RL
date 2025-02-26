@@ -10,6 +10,7 @@ from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
+import time
 
 ray.init()
 
@@ -90,9 +91,12 @@ while True:
          a = env.action_space.sample()
 
     obs, reward, done, truncated, info = env.step(a)
+    print(reward)
     env.render()
+    time.sleep(0.5)
 
     if done['__all__'] or truncated['__all__']:
 
         obs, *_ = env.reset()
+        break
     #time.sleep(1)

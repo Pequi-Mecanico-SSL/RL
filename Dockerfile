@@ -36,9 +36,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
 
 RUN mkdir videos
-RUN mkdir /ws/scripts
 COPY scripts/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
 COPY scripts/gymnasium/video_recorder.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/monitoring/video_recorder.py
+
+
+RUN mkdir /ws/scripts
+COPY scripts /ws/scripts
 
 # Copy the rSoccer directory
 RUN mkdir /ws/rSoccer
@@ -52,7 +55,7 @@ COPY rewards.py .
 # COPY sim2real /ws/sim2real
 # COPY sim2real.py .
 
-RUN mkdir /ws/volume
+# RUN mkdir /ws/volume
 
 # Iniciar o contêiner com o bash
 CMD ["/bin/bash"]
