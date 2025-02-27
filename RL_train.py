@@ -18,6 +18,9 @@ from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SS
 from torch.utils.tensorboard import SummaryWriter
 import os
 
+from rewards import DENSE_REWARDS, SPARSE_REWARDS
+import time
+
 # RAY_PDB=1 python rllib_multiagent.py
 # ray debug
 
@@ -142,6 +145,8 @@ if __name__ == "__main__":
     }
     configs["env"] = "Soccer"
 
+    configs["env_config"]["dense_rewards"] = DENSE_REWARDS
+    configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
     if args.evaluation:
         eval_configs = file_configs["evaluation"].copy()
         env_config_eval = file_configs["env"].copy()

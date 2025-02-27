@@ -4,7 +4,14 @@ from rSoccer.rsoccer_gym.Utils import Geometry2D
 from collections import namedtuple
 # kwargs vai ter kick_speed_x, fps, 
 
+def show_reward(reward_func, robot='blue_0'):
+    def wrapper(*args, **kwargs):
+        reward = reward_func(*args, **kwargs)
+        print(f"{reward_func.__name__} - {robot} {reward[robot]}")
+        return reward
+    return wrapper
 
+# @show_reward
 def r_speed(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     robots_left = frame.robots_blue
     robots_right = frame.robots_yellow
@@ -37,8 +44,8 @@ def r_speed(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     ball_dist_left  = min(diff_left  - discount_factor, max_dist)
     ball_dist_right = min(diff_right - discount_factor, max_dist)
 
-    ball_speed_rw_left  = ball_dist_left / time_per_frame
-    ball_speed_rw_right = ball_dist_right / time_per_frame
+    ball_speed_rw_left  = ball_dist_right / time_per_frame
+    ball_speed_rw_right = ball_dist_left  / time_per_frame
 
     reward = {
         **{f"{kwargs['left']}_{idx}":  np.clip(ball_speed_rw_left  / kick_speed_x, -1, 1) for idx in range(len(robots_left))},
@@ -48,7 +55,7 @@ def r_speed(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     return reward
 
 
-
+# @show_reward
 def r_dist(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     robots_left = frame.robots_blue
     robots_right = frame.robots_yellow
@@ -79,7 +86,7 @@ def r_dist(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     return reward
 
 
-
+# @show_reward
 def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
     robots_left = frame.robots_blue
@@ -94,14 +101,14 @@ def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
     
     left_robots_angle = []
-    for idx in range(len(robots_right)):
-        robot = robots_right[idx]
+    for idx in range(len(robots_left)):
+        robot = robots_left[idx]
         *_, angle = geometry._get_3dots_angle_between(robot, ball, goal_right)
         left_robots_angle.append(angle)
     
     right_robots_angle = []
-    for idx in range(len(robots_left)):
-        robot = robots_left[idx]
+    for idx in range(len(robots_right)):
+        robot = robots_right[idx]
         *_, angle = geometry._get_3dots_angle_between(robot, ball, goal_left)
         right_robots_angle.append(angle)
 
@@ -114,7 +121,7 @@ def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     return reward
 
 
-
+# @show_reward
 def r_def(field, frame, last_frame, **kwargs):
     robots_left = frame.robots_blue
     robots_right = frame.robots_yellow
@@ -126,17 +133,17 @@ def r_def(field, frame, last_frame, **kwargs):
     goal_right = goal_template(x= 0.2 + field.length/2, y= 0)
     goal_left  = goal_template(x=-0.2 - field.length/2, y= 0)
     geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
-    
+
     left_robots_angle = []
-    for idx in range(len(robots_right)):
-        robot = robots_right[idx]
-        *_, angle = geometry._get_3dots_angle_between(goal_right, robot, ball)
-        left_robots_angle.append(angle)
-    
-    right_robots_angle = []
     for idx in range(len(robots_left)):
         robot = robots_left[idx]
         *_, angle = geometry._get_3dots_angle_between(goal_left, robot, ball)
+        left_robots_angle.append(angle)
+    
+    right_robots_angle = []
+    for idx in range(len(robots_right)):
+        robot = robots_right[idx]
+        *_, angle = geometry._get_3dots_angle_between(goal_right, robot, ball)
         right_robots_angle.append(angle)
 
 

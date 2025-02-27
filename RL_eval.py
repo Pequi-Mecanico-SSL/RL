@@ -91,9 +91,9 @@ while True:
          a = env.action_space.sample()
 
     obs, reward, done, truncated, info = env.step(a)
-    print(reward)
+    #print(reward)
     env.render()
-    time.sleep(0.5)
+    input("Pess Enter to continue...")
 
     if done['__all__'] or truncated['__all__']:
 
