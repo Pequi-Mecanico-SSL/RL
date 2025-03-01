@@ -64,7 +64,7 @@ $$OUTSIDE_{REWARD} = -10$$
 
 **Clone o reposítorio com o comando:**
 
-    git clone https://<seu-username>:<seu-token>@github.com/Pequi-Mecanico-SSL/RL.git
+    git clone --recurse-submodules https://<seu-username>:<seu-token>@github.com/Pequi-Mecanico-SSL/RL.git
 
 *Obs: Caso nào tenha, gere o seu token em: *Settings > Developer settings > Personal access tokens*.
 
@@ -97,13 +97,13 @@ Vá no arquivo `config.yaml`  e mude as configurações que achar necessário, n
 
 Após isso, rode o comando abaixo para treinar salvando alguns episódios com mp4 durante a treinamento. 
 
-    python rllib_multiagent.py --evaluation
+    python RL_train.py --evaluation
 
 Caso queira apenas treinar, sem salvar nenhum video, basta tirar a `flag --evaluation`
 
 Acompanhe as métricas do treino em tempo real com tensorboard, vá em um terminal fora do container dentro do projeto e rode:
 
-    tensorboard --logdir=dgx_checkpoints
+    tensorboard --logdir=volumes/dgx_checkpoints
 
 ## 2. Para analisar um checkpoint treinado
 Olhe a pasta dgx_checkpoints (volume) fora do container, se você já realizou algo treinamento seguindo o passo 1, seu checkpoint deve estar lá. O nome da pasta de um checkpoint é parecido com algo como:
@@ -115,7 +115,7 @@ Olhe a pasta dgx_checkpoints (volume) fora do container, se você já realizou a
 * **Nome do exemperiemento:** PPO_Soccer_95caf_00000_0_2024-11-21_02-23-24
 * **Número do checkpoint:** checkpoint_000001
 
-Com isso anotado, abra o arquivo `render_episode.py` e altera a variável global CHECKPOINT_PATH, substuindo o nome do experiemento e número do checkpoint, o restante do caminho deve permanecer o mesmo. A estrutura deve ser: 
+Com isso anotado, abra o arquivo `RL_evalpy` e altere a variável global CHECKPOINT_PATH, substuindo o nome do experiemento e número do checkpoint, o restante do caminho deve permanecer o mesmo. A estrutura deve ser: 
 
     /root/ray_results/PPO_selfplay_rec/NOME_DO_EXPERIEMENTO/NUMERO_DO_CHECKPOINT
 
@@ -123,7 +123,7 @@ Por exemplo, o CHECKPOINT_PATH para o exemplo acima ficaria:
 
     /root/ray_results/PPO_selfplay_rec/PPO_Soccer_95caf_00000_0_2024-11-21_02-23-24/checkpoint_000001
 
-Com tudo configurado, agora rode o `render_episode.py`
+Com tudo configurado, agora rode o `RL_eval.py`
     python render_episode.py
     
 Caso não esteja reconhecendo a gpu, tente instalar o [nvidia container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-with-apt) ou mudar a versão do cuda no dockerfile
