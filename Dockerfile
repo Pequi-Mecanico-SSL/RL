@@ -1,7 +1,7 @@
 # Descrição: Dockerfile para criar um contêiner com o ambiente de desenvolvimento do rSim
 
-# Use uma imagem base Python oficial
-FROM python:3.10-slim
+# Use uma imagem base ros2 iron
+FROM osrf/ros:iron-desktop
 
 # Defina o diretório de trabalho dentro do contêiner (ws == workspace)
 WORKDIR /ws
@@ -11,6 +11,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     libstdc++6 \
+    pip \
     gcc \
     g++ \
     git \
@@ -29,7 +30,7 @@ COPY requirements.txt .
 # Instale as dependências do Python listadas em requirements.txt
 RUN pip install --no-cache-dir setuptools==65.5.0 pip==21 wheel==0.38.0
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
+RUN pip install torch --index-url https://download.pytorch.org/whl/cu118 --ignore-installed
 
 # Instalar rSim
 RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git

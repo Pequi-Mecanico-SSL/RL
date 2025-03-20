@@ -1,3 +1,5 @@
+# WARNING: SKETCH/DEV BRANCH WITH BAD, NON-WORKING CODE. PROCEED WITH CAUTION.  
+
 Este repostório utiliza a biblioteca [rsoccer](https://github.com/robocin/rSoccer) para aplicar algortimos de Reinforcement Learning (RL) no ambinete Small Size League - EntryLevel (SSL). 
 
 # Informações do ambiente
