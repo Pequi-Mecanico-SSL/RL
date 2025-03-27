@@ -41,13 +41,25 @@ def update_observation(obs_array, new_data):
 
 # Classe para computar observacao
 class ComputeObservation:
-    def __init__(self, positions: list, orientations: list, dists: list, angles: list):
+    def __init__(
+        self,
+        positions: list = [],
+        orientations: list = [],
+        dists: list = [],
+        angles: list = [],
+    ):
         self.positions = positions
         self.orientations = orientations
         self.dists = dists
         self.angles = angles
         self.ball_obs: ObsBola = None
         self.last_actions = None
+
+    def clear_lists(self):
+        self.positions = []
+        self.orientations = []
+        self.dists = []
+        self.angles = []
 
     def compute_ball_observation(self, ball, goal_ally, goal_adv):
         """Esta função calcula as observações da bola: tempo restante,
@@ -151,12 +163,14 @@ class ComputeObservation:
         dtype=np.float64,
     ):
         """Concatena todas as observações em um único vetor numpy."""
+
+        self.positions.append([self.ball_obs.x, self.ball_obs.y])
         self.positions = np.concatenate(self.positions)
         self.orientations = np.concatenate(self.orientations)
         self.dists = np.concatenate(self.dists)
         self.angles = np.concatenate(self.angles)
         time_left = [(MAX_EP_LENGTH - steps) / MAX_EP_LENGTH]
-
+        
         return np.concatenate(
             [
                 self.positions,
@@ -186,13 +200,14 @@ class ComputeObservation:
         Returns:
             obs (np.array): Vetor numpy contendo todas as observações.
         """
-        self.positions.append([self.ball_obs.x, self.ball_obs.y])
         self.compute_self_observation(robot, ball, goal_ally, goal_adv)
         self.compute_allies_observation(robot, allies)
         self.compute_adversaries_observation(robot, adversaries)
         self.last_actions = np.array([robot_action] + allies_actions).flatten()
 
-        return self.concatenate_observations(steps=steps)
+        concat_obs = self.concatenate_observations(steps=steps)
+        self.clear_lists()
+        return concat_obs
 
 
 class ObservationBuilder:
@@ -273,3 +288,7 @@ class ObservationBuilder:
                 observations[f"{team}_{i}"], robot_obs
             )
         return observations
+
+
+kwargs = {}
+OBSERVATION_CLASS = ComputeObservation(**kwargs)
