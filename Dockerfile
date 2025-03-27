@@ -52,7 +52,8 @@ COPY RL_train.py .
 COPY RL_eval.py .
 COPY config.yaml .
 COPY rewards.py .
-# COPY sim2real /ws/sim2real
+COPY observations.py .
+COPY scripts/sim2real /ws/sim2real
 # COPY sim2real.py .
 
 # RUN mkdir /ws/volume
