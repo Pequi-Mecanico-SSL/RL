@@ -19,6 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 import os
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
+from observations import OBSERVATION_CLASS
 import time
 
 # RAY_PDB=1 python rllib_multiagent.py
@@ -147,6 +148,7 @@ if __name__ == "__main__":
 
     configs["env_config"]["dense_rewards"] = DENSE_REWARDS
     configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
+    configs["env_config"]["observation_class"] = OBSERVATION_CLASS
     if args.evaluation:
         eval_configs = file_configs["evaluation"].copy()
         env_config_eval = file_configs["env"].copy()
