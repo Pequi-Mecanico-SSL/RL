@@ -154,6 +154,73 @@ def r_def(field, frame, last_frame, **kwargs):
     
     return reward
 
+
+def r_off_single(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    ball = frame.ball
+    goal_template = namedtuple('goal', ['x', 'y'])
+    goal_right = goal_template(x=0.2 + field.length/2, y=0)
+    goal_left  = goal_template(x=-0.2 - field.length/2, y=0)
+    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
+    
+    left_robots_angle = 0
+    for idx in range(len(robots_left)):
+        robot = robots_left[idx]
+        *_, angle = geometry._get_3dots_angle_between(robot, ball, goal_right)
+        left_robots_angle = max(angle, left_robots_angle)
+    
+    right_robots_angle = 0
+    for idx in range(len(robots_right)):
+        robot = robots_right[idx]
+        *_, angle = geometry._get_3dots_angle_between(robot, ball, goal_left)
+        right_robots_angle = max(angle, right_robots_angle)
+
+
+    reward = {
+        **{f"{kwargs['left']}_{idx}":  left_robots_angle - 1 for idx in range(len(robots_left))},
+        **{f"{kwargs['right']}_{idx}": right_robots_angle - 1 for idx in range(len(robots_right))},
+    }
+    
+    return reward
+
+
+def r_def_single(field, frame, last_frame, **kwargs):
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    ball = frame.ball
+    goal_template = namedtuple('goal', ['x', 'y'])
+    goal_right = goal_template(x= 0.2 + field.length/2, y= 0)
+    goal_left  = goal_template(x=-0.2 - field.length/2, y= 0)
+    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
+
+    left_robots_angle = 0
+    for idx in range(len(robots_left)):
+        robot = robots_left[idx]
+        *_, angle = geometry._get_3dots_angle_between(goal_left, robot, ball)
+        left_robots_angle = max(angle, left_robots_angle)
+    
+    right_robots_angle = 0
+    for idx in range(len(robots_right)):
+        robot = robots_right[idx]
+        *_, angle = geometry._get_3dots_angle_between(goal_right, robot, ball)
+        right_robots_angle = max(angle, right_robots_angle)
+
+
+    reward = {
+        **{f"{kwargs['left']}_{idx}":  left_robots_angle - 1 for idx in range(len(robots_left))},
+        **{f"{kwargs['right']}_{idx}": right_robots_angle - 1 for idx in range(len(robots_right))},
+    }
+    
+    return reward
+
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
     (0.7, r_speed, ["kick_speed_x", "fps"]),

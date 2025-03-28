@@ -70,17 +70,17 @@ $$OUTSIDE_{REWARD} = -10$$
 
 **Construa a imagem:**
 
-    docker build -t ssl-el .
+   sudo docker build -t ssl-el .
 
 **Rode o container**
 
 O commando a abaixo irá criar três volumes. O primeiro para salvar os checkpoints do treinamento. O segundo para salvar videos gravados do ambiente durante o treinamento. Por fim, o terceiro é apenas para usar o display para renderizar o ambiente do container.
 
-    docker run --gpus all --name pequi-ssl \
+    sudo docker run --gpus all --name pequi-ssl \
         -e DISPLAY=$DISPLAY \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
-        -v $(pwd)/videos:/ws/videos \
-        -v $(pwd)/dgx_checkpoints/PPO_selfplay_rec:/root/ray_results/PPO_selfplay_rec \
+        -v $(pwd)/volumes/videos:/ws/videos \
+        -v $(pwd)/volumes/dgx_checkpoints/PPO_selfplay_rec:/root/ray_results/PPO_selfplay_rec \
         -it ssl-el
 
 **Para conseguir renderizar um episódio** 
