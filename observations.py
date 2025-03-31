@@ -210,84 +210,84 @@ class ComputeObservation:
         return concat_obs
 
 
-class ObservationBuilder:
-    def __init__(self, field_length, max_ep_length, n_robots_blue, n_robots_yellow):
-        self.field_length = field_length
-        self.max_ep_length = max_ep_length
-        self.n_robots_blue = n_robots_blue
-        self.n_robots_yellow = n_robots_yellow
+# class ObservationBuilder:
+#     def __init__(self, field_length, max_ep_length, n_robots_blue, n_robots_yellow):
+#         self.field_length = field_length
+#         self.max_ep_length = max_ep_length
+#         self.n_robots_blue = n_robots_blue
+#         self.n_robots_yellow = n_robots_yellow
 
-    def build_observations(self, frame, last_actions, observations):
-        """Constrói as observações para todos os robôs em um frame."""
-        observations = self._process_team(
-            frame=frame,
-            team="blue",
-            last_actions=last_actions,
-            observations=observations,
-            invert=False,
-        )
-        observations = self._process_team(
-            frame=frame,
-            team="yellow",
-            last_actions=last_actions,
-            observations=observations,
-            invert=True,
-        )
-        return observations
+#     def build_observations(self, frame, last_actions, observations):
+#         """Constrói as observações para todos os robôs em um frame."""
+#         observations = self._process_team(
+#             frame=frame,
+#             team="blue",
+#             last_actions=last_actions,
+#             observations=observations,
+#             invert=False,
+#         )
+#         observations = self._process_team(
+#             frame=frame,
+#             team="yellow",
+#             last_actions=last_actions,
+#             observations=observations,
+#             invert=True,
+#         )
+#         return observations
 
-    def _process_team(self, frame, team, last_actions, observations, invert=False):
-        """Processa as observações de um time específico."""
-        team_key = f"robots_{team}"
-        n_robots = self.n_robots_blue if team == "blue" else self.n_robots_yellow
-        for i in range(n_robots):
-            robot_data = frame[team_key][f"robot_{i}"]
-            robot = create_robot(robot_data)
-            if invert:
-                robot = inverted_robot(robot)
-            robot_action = last_actions[f"{team}_{i}"]
-            # Build allies and adversaries lists based on team
-            if team == "blue":
-                allies = [
-                    create_robot(frame[team_key][f"robot_{j}"])
-                    for j in range(n_robots)
-                    if j != i
-                ]
-                adversaries = [
-                    create_robot(frame["robots_yellow"][f"robot_{j}"])
-                    for j in range(self.n_robots_yellow)
-                ]
-                ball = BALL(x=frame["ball"][0], y=frame["ball"][1], v_x=0, v_y=0)
-                goal_adv = GOAL(x=0.2 + self.field_length / 2, y=0)
-                goal_ally = GOAL(x=-0.2 - self.field_length / 2, y=0)
-            else:
-                allies = [
-                    inverted_robot(create_robot(frame[team_key][f"robot_{j}"]))
-                    for j in range(n_robots)
-                    if j != i
-                ]
-                adversaries = [
-                    inverted_robot(create_robot(frame["robots_blue"][f"robot_{j}"]))
-                    for j in range(self.n_robots_blue)
-                ]
-                ball = BALL(x=-frame["ball"][0], y=frame["ball"][1], v_x=0, v_y=0)
-                goal_adv = GOAL(x=-(-0.2 - self.field_length / 2), y=0)
-                goal_ally = GOAL(x=-(0.2 + self.field_length / 2), y=0)
-            # Compute the robot observation vector
-            compute_observation = ComputeObservation()
-            robot_obs = compute_observation.compute_observations(
-                robot,
-                allies,
-                adversaries,
-                robot_action,
-                [last_actions[f"{team}_{j}"] for j in range(n_robots) if j != i],
-                ball,
-                goal_adv,
-                goal_ally,
-            )
-            observations[f"{team}_{i}"] = update_observation(
-                observations[f"{team}_{i}"], robot_obs
-            )
-        return observations
+#     def _process_team(self, frame, team, last_actions, observations, invert=False):
+#         """Processa as observações de um time específico."""
+#         team_key = f"robots_{team}"
+#         n_robots = self.n_robots_blue if team == "blue" else self.n_robots_yellow
+#         for i in range(n_robots):
+#             robot_data = frame[team_key][f"robot_{i}"]
+#             robot = create_robot(robot_data)
+#             if invert:
+#                 robot = inverted_robot(robot)
+#             robot_action = last_actions[f"{team}_{i}"]
+#             # Build allies and adversaries lists based on team
+#             if team == "blue":
+#                 allies = [
+#                     create_robot(frame[team_key][f"robot_{j}"])
+#                     for j in range(n_robots)
+#                     if j != i
+#                 ]
+#                 adversaries = [
+#                     create_robot(frame["robots_yellow"][f"robot_{j}"])
+#                     for j in range(self.n_robots_yellow)
+#                 ]
+#                 ball = BALL(x=frame["ball"][0], y=frame["ball"][1], v_x=0, v_y=0)
+#                 goal_adv = GOAL(x=0.2 + self.field_length / 2, y=0)
+#                 goal_ally = GOAL(x=-0.2 - self.field_length / 2, y=0)
+#             else:
+#                 allies = [
+#                     inverted_robot(create_robot(frame[team_key][f"robot_{j}"]))
+#                     for j in range(n_robots)
+#                     if j != i
+#                 ]
+#                 adversaries = [
+#                     inverted_robot(create_robot(frame["robots_blue"][f"robot_{j}"]))
+#                     for j in range(self.n_robots_blue)
+#                 ]
+#                 ball = BALL(x=-frame["ball"][0], y=frame["ball"][1], v_x=0, v_y=0)
+#                 goal_adv = GOAL(x=-(-0.2 - self.field_length / 2), y=0)
+#                 goal_ally = GOAL(x=-(0.2 + self.field_length / 2), y=0)
+#             # Compute the robot observation vector
+#             compute_observation = ComputeObservation()
+#             robot_obs = compute_observation.compute_observations(
+#                 robot,
+#                 allies,
+#                 adversaries,
+#                 robot_action,
+#                 [last_actions[f"{team}_{j}"] for j in range(n_robots) if j != i],
+#                 ball,
+#                 goal_adv,
+#                 goal_ally,
+#             )
+#             observations[f"{team}_{i}"] = update_observation(
+#                 observations[f"{team}_{i}"], robot_obs
+#             )
+#         return observations
 
 
 kwargs = {}
