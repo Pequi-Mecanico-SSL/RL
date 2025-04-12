@@ -130,9 +130,9 @@ def state_to_observation(state: dict[str, list]):
 with open(f"{CHECKPOINT_PATH_BLUE}/policies/policy_blue/policy_state.pkl", "rb") as f:
     policy_state: dict = pickle.load(f)
 
-obs_space_size: int = policy_state["policy_spec"]['observation_space']['space']['shape'][0]
-ACT_SPACE_SIZE: int = policy_state["policy_spec"]['action_space']['space']['shape'][0]
-model = InferenceModel(input_size=obs_space_size, output_size=2*ACT_SPACE_SIZE)
+# OBS_SPACE_SIZE: int = policy_state["policy_spec"]['observation_space']['space']['shape'][0]
+# ACT_SPACE_SIZE: int = policy_state["policy_spec"]['action_space']['space']['shape'][0]
+model = InferenceModel(input_size=N_STACK_OBS*OBS_SPACE_SIZE, output_size=2*ACT_SPACE_SIZE)
 
 weights_dict = {}
 for layer_name, weights in policy_state["weights"].items():

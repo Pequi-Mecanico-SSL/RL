@@ -51,7 +51,7 @@ RUN cd /ws/rSoccer && pip install .
 
 COPY RL_train.py .
 COPY RL_eval.py .
-COPY RL_ros.py .
+COPY RL_infer.py .
 COPY config.yaml .
 COPY rewards.py .
 # COPY sim2real /ws/sim2real
