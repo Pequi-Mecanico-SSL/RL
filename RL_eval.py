@@ -15,8 +15,8 @@ import time
 
 ray.init()
 
-CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
-CHECKPOINT_PATH_YELLOW = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_6a346_00000_0_2025-03-18_02-05-07/checkpoint_000004"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_28842_00000_0_2024-12-06_02-52-40/checkpoint_000007"
+CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_28842_00000_0_2024-12-06_02-52-40/checkpoint_000007"
 NUM_EPS = 100
 
 def create_rllib_env(config):
@@ -96,6 +96,7 @@ for ep in range(NUM_EPS):
 
         a = {}
         if env.n_robots_blue > 0:
+            breakpoint()
             a.update(agents.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
 
         if env.n_robots_yellow > 0:
