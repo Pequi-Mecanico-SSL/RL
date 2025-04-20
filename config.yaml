@@ -1,7 +1,7 @@
 score_average_over: 100
 timesteps_total: 160000000 # Controla numero maximo de timesteps
 checkpoint_freq: 50 # Salvar checkpoint a cada 100 iterações 
-checkpoint_restore: "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_d2cd3_00000_0_2024-12-05_01-54-11/checkpoint_000002" #"/root/ray_results/PPO_selfplay_rec/PPO_Soccer_95caf_00000_0_2024-11-21_02-23-24/checkpoint_000001" # Caminho para restaurar checkpoint
+checkpoint_restore: null #"/root/ray_results/PPO_selfplay_rec/PPO_Soccer_d2cd3_00000_0_2024-12-05_01-54-11/checkpoint_000002" #"/root/ray_results/PPO_selfplay_rec/PPO_Soccer_95caf_00000_0_2024-11-21_02-23-24/checkpoint_000001" # Caminho para restaurar checkpoint
 rllib:
   num_cpus: 7  # Depende do num_workers, tem que ser igual ou maior
   num_gpus: 1
@@ -51,7 +51,7 @@ env:
       2: [ 2.0,  1.0,  180.0]
       3: [ 2.0, -1.0,  180.0]
     ball: [0, 0]
-  field_type: 0
+  field_type: 1
   fps: 30 # frames por segundo
   match_time: 40 # duração da partida em segundos
   render_mode: "human"
