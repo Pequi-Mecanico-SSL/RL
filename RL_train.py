@@ -43,11 +43,14 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         pol_id = "policy_yellow"
     return pol_id
 
+def list_dir(parent_dir, regex):
+    experiments_dirs = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
+    matching_exp = [d for d in experiments_dirs if re.match(regex, d)]
+    return matching_exp
+
 def find_latest_experiment(parent_dir):
     # Define the regex pattern for the directory name
-    pattern = r"PPO_Soccer_\w+_\d+_\d+_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
-    experiments_dirs = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
-    matching_exp = [d for d in experiments_dirs if re.match(pattern, d)]
+    matching_exp = list_dir(parent_dir, r"PPO_Soccer_\w+_\d+_\d+_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}")
     matching_exp.sort(key=lambda x: datetime.strptime("_".join(x.split('_')[-2:]), "%Y-%m-%d_%H-%M-%S"), reverse=True)
     latest_exp = matching_exp[0] if len(matching_exp) > 0 else None
 
@@ -55,9 +58,7 @@ def find_latest_experiment(parent_dir):
         return None
     
     # Define the regex pattern for the checkpoint directory name
-    checkpoint_pattern = r"checkpoint_\d{6}"
-    checkpoint_dirs = [d for d in os.listdir(os.path.join(parent_dir, latest_exp)) if os.path.isdir(os.path.join(parent_dir, latest_exp, d))]
-    matching_checkpoints = [d for d in checkpoint_dirs if re.match(checkpoint_pattern, d)]
+    matching_checkpoints = list_dir(os.path.join(parent_dir, latest_exp), r"checkpoint_\d{6}")
     matching_checkpoints.sort(key=lambda x: int(x.split('_')[-1]), reverse=True)
     latest_checkpoint = matching_checkpoints[0] if len(matching_checkpoints) > 0 else None
 
@@ -137,8 +138,8 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")
 
-if __name__ == "__main__":
-    args = parser.parse_args()
+def train(evaluation, sparse_rewards, dense_rewards):
+    
 
     ray.init()
 
@@ -182,9 +183,9 @@ if __name__ == "__main__":
     }
     configs["env"] = "Soccer"
 
-    configs["env_config"]["dense_rewards"] = DENSE_REWARDS
-    configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
-    if args.evaluation:
+    configs["env_config"]["dense_rewards"] = dense_rewards
+    configs["env_config"]["sparse_rewards"] = sparse_rewards
+    if evaluation:
         eval_configs = file_configs["evaluation"].copy()
         env_config_eval = file_configs["env"].copy()
         configs["evaluation_interval"] = eval_configs["evaluation_interval"]
@@ -234,3 +235,6 @@ if __name__ == "__main__":
     print(best_checkpoint)
     print("Done training")
 
+if __name__ == "__main__":
+    args = parser.parse_args()
+    train(args.evaluation, SPARSE_REWARDS, DENSE_REWARDS)
