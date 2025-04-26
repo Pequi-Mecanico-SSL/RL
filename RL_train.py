@@ -138,13 +138,10 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")
 
-def train(evaluation, sparse_rewards, dense_rewards):
+def train(evaluation, sparse_rewards, dense_rewards, file_configs, checkpoint_restore=None):
     
 
     ray.init()
-
-    with open("config.yaml") as f:
-        file_configs = yaml.safe_load(f)
     
     configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
@@ -207,7 +204,7 @@ def train(evaluation, sparse_rewards, dense_rewards):
             checkpoint_at_end=True,
             local_dir=os.path.abspath("volume"),
             #resume=True,
-            restore=file_configs["checkpoint_restore"],
+            restore= checkpoint_restore or file_configs["checkpoint_restore"],
         )
     except Exception as e:
         latest_experiment = find_latest_experiment(parent_directory)
@@ -236,5 +233,7 @@ def train(evaluation, sparse_rewards, dense_rewards):
     print("Done training")
 
 if __name__ == "__main__":
+    with open("config.yaml") as f:
+        file_configs = yaml.safe_load(f)
     args = parser.parse_args()
-    train(args.evaluation, SPARSE_REWARDS, DENSE_REWARDS)
+    train(args.evaluation, SPARSE_REWARDS, DENSE_REWARDS, file_configs, file_configs["checkpoint_restore"])

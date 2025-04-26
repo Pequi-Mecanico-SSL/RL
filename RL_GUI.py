@@ -8,7 +8,11 @@ def sparse_reward_struct(names, *weights):
 def dense_reward_struct(functions, args, *weights):
     return [(w, f, a) for w, f, a in zip(weights, functions, args)]
 
-def train(sparse_rewards, dense_rewards):
+def train_agent(sparse_rewards, dense_rewards, checkpoint_restore):
+    with open("config.yaml") as f:
+        file_configs = yaml.safe_load(f)
+    
+    #train(True, sparse_rewards, dense_rewards, file_configs, checkpoint_restore)
     print(sparse_rewards)
     print(dense_rewards)
 
@@ -20,7 +24,7 @@ with gr.Blocks(fill_height=True) as demo:
             r"PPO_Soccer_\w+_\d+_\d+_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
         )
         checkpoint_dirs.sort(key=lambda x: datetime.strptime("_".join(x.split('_')[-2:]), "%Y-%m-%d_%H-%M-%S"), reverse=True)
-        gr.Dropdown(label="Checkpoint", choices=[None] + checkpoint_dirs)
+        checkpoint_restore = gr.Dropdown(label="Checkpoint", choices=[None] + checkpoint_dirs)
     with gr.Row(equal_height=True):
         with gr.Column(scale=1):
             gr.Markdown("### Dense Rewards")
@@ -56,10 +60,11 @@ with gr.Blocks(fill_height=True) as demo:
         with gr.Column(scale=2):
             gr.Video(label="Video", value="videos/rl-video-episode-170.mp4")
 
-    train_button = gr.Button("Train")
+
+    train_button = gr.Button("Train", variant="primary")
     train_button.click(
-        fn=train, 
-        inputs=[sparse_rewards, dense_rewards],
+        fn=train_agent, 
+        inputs=[sparse_rewards, dense_rewards, checkpoint_restore],
     )
 
 

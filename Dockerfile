@@ -52,6 +52,7 @@ RUN cd /ws/rSoccer && pip install .
 COPY RL_train.py .
 COPY RL_eval.py .
 COPY RL_infer.py .
+COPY RL_GUI.py .
 COPY config.yaml .
 COPY rewards.py .
 # COPY sim2real /ws/sim2real
@@ -60,4 +61,4 @@ COPY rewards.py .
 # RUN mkdir /ws/volume
 
 # Iniciar o contêiner com o bash
-CMD ["/bin/bash"]
+CMD ["python", "RL_GUI.py"]
