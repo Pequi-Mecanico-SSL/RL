@@ -13,6 +13,10 @@ from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
 import time
+import debugpy
+
+debugpy.listen(("0.0.0.0", 5678))
+input("Aguardando o debugger...")
 
 ray.init()
 

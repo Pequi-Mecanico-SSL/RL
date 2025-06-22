@@ -221,7 +221,7 @@ def r_def_single(field, frame, last_frame, **kwargs):
     
     return reward
 
-@show_reward
+#@show_reward
 def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     """
     Reward for passing the ball to an ally or intercepting a pass from an opponent.
@@ -234,7 +234,11 @@ def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs)
     judge_info = kwargs["judge_info"]
     judge_last_info = kwargs["judge_last_info"]
 
-    if judge_info["ball_possession"] == judge_last_info["last_touch"]:
+    if (
+        judge_last_info["last_touch"] is None or
+        judge_info["ball_possession"] is None or 
+        judge_info["ball_possession"] == judge_last_info["last_touch"]
+    ):
         # There is no pass, so we return a reward of 0 for all robots
         return {
             **{f"{kwargs['left']}_{idx}": 0 for idx in range(len(robots_left))},
@@ -249,6 +253,7 @@ def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs)
 
     if team_color_judge == team_color_judge_last:
         # The pass was made to an ally
+        print(f"Pass made! opposite_team: {opposite_team}, pass_team: {pass_team}")
         reward = {
             **{f"{pass_team}_{idx}": 1 for idx in range(len(robots_left))},
             **{f"{opposite_team}_{idx}": -1 for idx in range(len(robots_right))},
@@ -256,12 +261,13 @@ def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs)
 
     if team_color_judge != team_color_judge_last:
         # The pass was intercepted by an opponent
-        pass_team = "left" if team_color_judge_last == kwargs["left"] else "right"
-        opposite_team = "right" if pass_team == "left" else "left"
+        print(f"Intercept made! opposite_team: {opposite_team}, pass_team: {pass_team}")
         reward = {
             **{f"{pass_team}_{idx}": -1 for idx in range(len(robots_left))},
             **{f"{opposite_team}_{idx}": 1 for idx in range(len(robots_right))},
         }
+    
+    print(reward)
 
     return reward
 
