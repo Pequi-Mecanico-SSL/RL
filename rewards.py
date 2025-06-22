@@ -221,15 +221,60 @@ def r_def_single(field, frame, last_frame, **kwargs):
     
     return reward
 
+@show_reward
+def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+    """
+    Reward for passing the ball to an ally or intercepting a pass from an opponent.
+    """
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    judge_info = kwargs["judge_info"]
+    judge_last_info = kwargs["judge_last_info"]
+
+    if judge_info["ball_possession"] == judge_last_info["last_touch"]:
+        # There is no pass, so we return a reward of 0 for all robots
+        return {
+            **{f"{kwargs['left']}_{idx}": 0 for idx in range(len(robots_left))},
+            **{f"{kwargs['right']}_{idx}": 0 for idx in range(len(robots_right))},
+        }
+    
+    team_color_judge = judge_info["ball_possession"].split("_")[0]
+    team_color_judge_last = judge_last_info["last_touch"].split("_")[0]
+
+    pass_team = judge_info["ball_possession"].split("_")[0]
+    opposite_team = "yellow" if pass_team == "blue" else "blue"
+
+    if team_color_judge == team_color_judge_last:
+        # The pass was made to an ally
+        reward = {
+            **{f"{pass_team}_{idx}": 1 for idx in range(len(robots_left))},
+            **{f"{opposite_team}_{idx}": -1 for idx in range(len(robots_right))},
+        }
+
+    if team_color_judge != team_color_judge_last:
+        # The pass was intercepted by an opponent
+        pass_team = "left" if team_color_judge_last == kwargs["left"] else "right"
+        opposite_team = "right" if pass_team == "left" else "left"
+        reward = {
+            **{f"{pass_team}_{idx}": -1 for idx in range(len(robots_left))},
+            **{f"{opposite_team}_{idx}": 1 for idx in range(len(robots_right))},
+        }
+
+    return reward
+
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
-    (0.7, r_speed, ["kick_speed_x", "fps"]),
+    (0.5, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
     (0.1, r_off,   []),
     (0.1, r_def,   []),
+    (0.2, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
 ]
 
 SPARSE_REWARDS = {
     "GOAL_REWARD": 10, # robot that scored gets this reward and the other team gets negative this reward
-    "OUTSIDE_REWARD": -10 # every robot (both teams) get this reward if the ball is outside the field
+    "OUTSIDE_REWARD": -10 # the team of the last robot that touched the ball gets this reward
 }

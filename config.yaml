@@ -54,4 +54,6 @@ env:
   field_type: 1
   fps: 30 # frames por segundo
   match_time: 40 # duração da partida em segundos
+  possession_radius_scale: 3
+  direction_change_threshold: 1
   render_mode: "human"

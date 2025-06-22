@@ -9,6 +9,7 @@ import numpy as np
 from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
 import time
@@ -38,6 +39,7 @@ configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
 
 configs["env_config"] = file_configs["env"]
+configs["env_config"]["judge"] = Judge
 #configs["env_config"]["init_pos"]["ball"] = [random.uniform(-2, 2), random.uniform(-1.2, 1.2)]
 ray.tune.registry._unregister_all()
 ray.tune.registry.register_env("Soccer", create_rllib_env)
