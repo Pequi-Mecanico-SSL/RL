@@ -96,7 +96,6 @@ for ep in range(NUM_EPS):
 
         a = {}
         if env.n_robots_blue > 0:
-            breakpoint()
             a.update(agents.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
 
         if env.n_robots_yellow > 0:
