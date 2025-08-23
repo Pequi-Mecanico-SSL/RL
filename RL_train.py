@@ -16,7 +16,8 @@ from ray.rllib.evaluation.episode import Episode
 
 from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
-from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
+from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
+from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -151,6 +152,7 @@ if __name__ == "__main__":
         maxlen=file_configs["score_average_over"]
     )
     configs["env_config"] = file_configs["env"]
+    configs["env_config"]["judge"] = Judge
 
     tune.registry.register_env("Soccer", create_rllib_env)
     tune.registry.register_env("Soccer_recorder", create_rllib_env_recorder)

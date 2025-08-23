@@ -15,13 +15,13 @@ from rewards import DENSE_REWARDS, SPARSE_REWARDS
 import time
 import debugpy
 
-debugpy.listen(("0.0.0.0", 5678))
-input("Aguardando o debugger...")
+# debugpy.listen(("0.0.0.0", 5678))
+# input("Aguardando o debugger...")
 
 ray.init()
 
-CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_28842_00000_0_2024-12-06_02-52-40/checkpoint_000007"
-CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_28842_00000_0_2024-12-06_02-52-40/checkpoint_000007"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_57cd5_00000_0_2025-08-22_05-10-38/checkpoint_000008"
+CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
 NUM_EPS = 100
 
 def create_rllib_env(config):
@@ -100,9 +100,11 @@ for ep in range(NUM_EPS):
         o_blue = {f"blue_{i}": obs[f"blue_{i}"] for i in range(env.n_robots_blue)}
         o_yellow = {f"yellow_{i}": obs[f"yellow_{i}"] for i in range(env.n_robots_yellow)}
 
-        a = {}
+        a = {
+            **{f"blue_{i}": [0, 0, 0, 0] for i in range(env.n_robots_blue)},
+            **{f"yellow_{i}": [0, 0, 0, 0]  for i in range(env.n_robots_yellow)}
+        }
         if env.n_robots_blue > 0:
-            breakpoint()
             a.update(agents.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
 
         if env.n_robots_yellow > 0:
@@ -110,13 +112,14 @@ for ep in range(NUM_EPS):
 
         if np.random.rand() < e:
             a = env.action_space.sample()
-
+        
         obs, reward, done, truncated, info = env.step(a)
         #print(reward)
         env.render()
+        
         #input("Pess Enter to continue...")
 
-    obs, *_ = env.reset()
     print(f"Ep: {ep:>4} | Score: {info['blue_0']['score']}")
+    obs, *_ = env.reset()
             # break
     #time.sleep(1)

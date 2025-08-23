@@ -7,10 +7,11 @@ from rSoccer import SSLMultiAgentEnv
 
 from scripts import InferenceModel
 from scripts import InferenceBetaDist
-# import debugpy
+import debugpy
+from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
-# debugpy.listen(("0.0.0.0", 5679))
-# input("Aguardando o debugger...")
+debugpy.listen(("0.0.0.0", 5679))
+input("Aguardando o debugger...")
 # Daqui para baixo não precisa mexer
 
 def state_to_observation(state: dict[str, list], last_actions: dict[str, list], obs_space_size: int, n_steps: int) -> dict[str, np.ndarray]:
@@ -72,6 +73,7 @@ def state_to_observation(state: dict[str, list], last_actions: dict[str, list], 
     env_config["init_pos"]["ball"] = state["ball"].copy()
 
     # Uso o ambiente aqui só para calcular as observações
+    env_config["judge"] = Judge
     env_dummy = SSLMultiAgentEnv(**env_config)
     env_dummy.reset()
     env_dummy.last_actions = last_actions.copy()
@@ -194,6 +196,7 @@ if __name__ == "__main__":
     }
 
     # Essa parte é só para esse teste pra construir state, não estaria no uso final----
+    file_configs["env"]["judge"] = Judge
     ENV = SSLMultiAgentEnv(**file_configs["env"])
     ENV.reset()
     state = {}
