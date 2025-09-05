@@ -230,6 +230,15 @@ DENSE_REWARDS = [
 ]
 
 SPARSE_REWARDS = {
-    "GOAL_REWARD": 10, # robot that scored gets this reward and the other team gets negative this reward
-    "OUTSIDE_REWARD": -10 # every robot (both teams) get this reward if the ball is outside the field
+    # Recompensas para o Time de Ataque (Azul)
+    "ATTACK_GOAL_REWARD": 25,
+    "ATTACK_GOAL_PENALTY": -5,
+    
+    # Recompensas para o Time de Defesa (Amarelo)
+    "DEFENSE_GOAL_PENALTY": -25,
+    "DEFENSE_GOAL_REWARD": 5,
+    "DEFENSE_CLEAN_SHEET_BONUS": 15, # Bônus por não sofrer gol
+    
+    # Recompensa geral
+    "OUTSIDE_REWARD": -10 
 }
