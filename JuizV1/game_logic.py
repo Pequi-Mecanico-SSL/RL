@@ -166,36 +166,62 @@ def check_ball_fundo(ball, field, ball_bounds, time_ult_toque):
     TIME_RED = COLORS["RED"]
     # Verifica se a bola saiu pelas linhas de fundo (não sendo gol)
 
-    
-    if ball.x < min_x or ball.x > max_x: #
+ # =================== LÓGICA BOLA SAINDO PELA LINHA DE FUNDO =================== 
+ # A lógica esta baseada em que o time AZUL defende o lado ESQUERDO e o RED o lado DIREITO
+
+    if ball.x < min_x or ball.x > max_x:
+        # SE A BOLA SAIU ELA TEM QUE PARAR
+        ball.vx = 0 #
+        ball.vy = 0  #
         
-        if ball.x < min_x and ball.y > center_y:
-            print("Linha de Fundo ESQUERDA INFERIOR!")
-            
-        if ball.x < min_x and ball.y < center_y:
-            print("Linha de Fundo ESQUERDA SUPERIOR!")
+        # === Esquerda INFERIOR ===
+        # TIME AZUL FOI O ULTIMO TOQUE == ESCANTEIO RED
+        if ball.x < min_x and ball.y > center_y and time_ult_toque == TIME_AZUL:
+            print("ESCANTEIO ESQUERDA INFERIOR PARA RED")
+            ball.y = field.screen_height - field.margin # <<< CORREÇÃO APLICADA
+            ball.x = field.margin
+        # TIME RED FOI O ULTIMO TOQUE == TIRO DE META AZUL
+        if ball.x < min_x and ball.y > center_y and time_ult_toque == TIME_RED:
+            print("TIRO DE META PARA AZUL")
+            ball.x = field.margin + field.penalty_length / 2
+            ball.y = field.screen_height / 2
+        
+        # === Esquerda SUPERIOR ===
+        # TIME AZUL FOI O ULTIMO TOQUE == ESCANTEIO RED
+        if ball.x < min_x and ball.y < center_y and time_ult_toque == TIME_AZUL:
+            print("ESCANTEIO ESQUERDA SUPERIOR PARA RED")
+            ball.y = field.margin
+            ball.x = field.margin
+        # TIME RED FOI O ULTIMO TOQUE == TIRO DE META AZUL
+        if ball.x < min_x and ball.y < center_y and time_ult_toque == TIME_RED:
+            print("TIRO DE META PARA AZUL")
+            ball.x = field.margin + field.penalty_length / 2
+            ball.y = field.screen_height / 2
 
-        # ESCANTEIO VERMELHO DIREITO EMBAIXO FUNCIONANDO!!!!!!!!!
+        # === Direita INFERIOR ===
+        # TIME RED ULTIMO TOQUE = ESCANTEIO AZUL
         if ball.x > max_x and ball.y > center_y and time_ult_toque == TIME_RED:
-            print("Linha de Fundo DIREITA INFERIOR!")
-            ball.y = field.screen_height #
+            print("ESCANTEIO DIREITA INFERIOR PARA AZUL")
+            ball.y = field.screen_height - field.margin # <<< CORREÇÃO APLICADA
             ball.x = field.screen_width - field.margin
-            ball.vx = 0 #
-            ball.vy = 0 #
+        # TIME AZUL ULTIMO TOQUE = TIRO DE META RED
+        if ball.x > max_x and ball.y > center_y and time_ult_toque == TIME_AZUL:
+            print("TIRO DE META PARA RED")
+            ball.x = field.screen_width - field.margin - field.penalty_length / 2 
+            ball.y = field.screen_height / 2 
 
-
-        if ball.x > max_x and ball.y < center_y:
-            print("Linha de Fundo DIREITA SUPERIOR!")
+        # === Direita SUPERIOR ===
+        # TIME RED ULTIMO TOQUE = ESCANTEIO AZUL
+        if ball.x > max_x and ball.y < center_y and time_ult_toque == TIME_RED:
+            print("ESCANTEIO DIREITA SUPERIOR PARA AZUL")
+            ball.y = field.margin #
+            ball.x = field.screen_width - field.margin
+        # TIME AZUL ULTIMO TOQUE = TIRO DE META RED
+        if ball.x > max_x and ball.y < center_y and time_ult_toque == TIME_AZUL:
+            print("TIRO DE META PARA RED")
+            ball.x = field.screen_width - field.margin - field.penalty_length / 2 
+            ball.y = field.screen_height / 2
             
             
-
-        # saiu_pela_esquerda = ball.x < min_x #
-        # if saiu_pela_esquerda: #
-        #     ball.x = field.margin + field.penalty_length / 2 #
-        # else: #
-        #     ball.x = field.screen_width - field.margin - field.penalty_length / 2 #
-        # ball.y = field.screen_height / 2 #
-        # ball.vx = 0 #
-        # ball.vy = 0 #
-        # return True # Indica que a bola saiu de jogo
+        return True # Indica que a bola saiu de jogo
     return False # A bola não saiu de jogo
