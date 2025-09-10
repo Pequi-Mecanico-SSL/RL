@@ -1,0 +1,223 @@
+{
+  "batch_mode": "truncate_episodes",
+  "callbacks": "<class '__main__.SelfPlayUpdateCallback'>",
+  "clip_param": 0.2,
+  "disable_env_checking": true,
+  "entropy_coeff": 0.01,
+  "env": "Soccer",
+  "env_config": {
+    "dense_rewards": [
+      [
+        0.7,
+        "<function r_speed at 0x73e16daa2440>",
+        [
+          "kick_speed_x",
+          "fps"
+        ]
+      ],
+      [
+        0.1,
+        "<function r_dist at 0x73e16daac5e0>",
+        []
+      ],
+      [
+        0.1,
+        "<function r_off at 0x73e16daac670>",
+        []
+      ],
+      [
+        0.1,
+        "<function r_def at 0x73e16daac700>",
+        []
+      ]
+    ],
+    "field_type": 1,
+    "fps": 30,
+    "init_pos": {
+      "ball": [
+        0,
+        0
+      ],
+      "blue": {
+        "1": [
+          -1.5,
+          0.0,
+          0.0
+        ],
+        "2": [
+          -2.0,
+          1.0,
+          0.0
+        ],
+        "3": [
+          -2.0,
+          -1.0,
+          0.0
+        ]
+      },
+      "yellow": {
+        "1": [
+          1.5,
+          0.0,
+          180.0
+        ],
+        "2": [
+          2.0,
+          1.0,
+          180.0
+        ],
+        "3": [
+          2.0,
+          -1.0,
+          180.0
+        ]
+      }
+    },
+    "match_time": 40,
+    "render_mode": "human",
+    "sparse_rewards": {
+      "GOAL_REWARD": 10,
+      "OUTSIDE_REWARD": -10
+    }
+  },
+  "evaluation_config": {
+    "env": "Soccer_recorder",
+    "env_config": {
+      "dense_rewards": [
+        [
+          0.7,
+          "<function r_speed at 0x73e16daa2440>",
+          [
+            "kick_speed_x",
+            "fps"
+          ]
+        ],
+        [
+          0.1,
+          "<function r_dist at 0x73e16daac5e0>",
+          []
+        ],
+        [
+          0.1,
+          "<function r_off at 0x73e16daac670>",
+          []
+        ],
+        [
+          0.1,
+          "<function r_def at 0x73e16daac700>",
+          []
+        ]
+      ],
+      "field_type": 1,
+      "fps": 30,
+      "init_pos": {
+        "ball": [
+          0,
+          0
+        ],
+        "blue": {
+          "1": [
+            -1.5,
+            0.0,
+            0.0
+          ],
+          "2": [
+            -2.0,
+            1.0,
+            0.0
+          ],
+          "3": [
+            -2.0,
+            -1.0,
+            0.0
+          ]
+        },
+        "yellow": {
+          "1": [
+            1.5,
+            0.0,
+            180.0
+          ],
+          "2": [
+            2.0,
+            1.0,
+            180.0
+          ],
+          "3": [
+            2.0,
+            -1.0,
+            180.0
+          ]
+        }
+      },
+      "match_time": 40,
+      "render_mode": "human",
+      "sparse_rewards": {
+        "GOAL_REWARD": 10,
+        "OUTSIDE_REWARD": -10
+      }
+    },
+    "num_envs_per_worker": 1
+  },
+  "evaluation_duration": 1,
+  "evaluation_duration_unit": "episodes",
+  "evaluation_interval": 1,
+  "evaluation_num_workers": 0,
+  "framework": "torch",
+  "gamma": 0.99,
+  "grad_clip": 0.5,
+  "kl_coeff": 0.0,
+  "lambda": 0.95,
+  "lr": 0.0004,
+  "model": {
+    "custom_action_dist": "beta_dist",
+    "custom_model": "custom_vf_model",
+    "custom_model_config": {
+      "fcnet_hiddens": [
+        300,
+        200,
+        100
+      ],
+      "vf_share_layers": false
+    }
+  },
+  "multiagent": {
+    "policies": {
+      "policy_blue": [
+        null,
+        "Box(-1.2009999999999998, 1.2009999999999998, (616,), float64)",
+        "Box(-1.0, 1.0, (4,), float64)",
+        {
+          "model": {
+            "custom_action_dist": "beta_dist_blue"
+          }
+        }
+      ],
+      "policy_yellow": [
+        null,
+        "Box(-1.2009999999999998, 1.2009999999999998, (616,), float64)",
+        "Box(-1.0, 1.0, (4,), float64)",
+        {
+          "model": {
+            "custom_action_dist": "beta_dist_yellow"
+          }
+        }
+      ]
+    },
+    "policies_to_train": [
+      "policy_blue"
+    ],
+    "policy_mapping_fn": "<function policy_mapping_fn at 0x73e16daac820>"
+  },
+  "normalize_actions": false,
+  "num_cpus": 7,
+  "num_envs_per_worker": 2,
+  "num_gpus": 1,
+  "num_sgd_iter": 5,
+  "num_workers": 6,
+  "rollout_fragment_length": "auto",
+  "sgd_minibatch_size": 12840,
+  "train_batch_size": 38520,
+  "vf_clip_param": 100000.0,
+  "vf_loss_coeff": 0.5
+}
