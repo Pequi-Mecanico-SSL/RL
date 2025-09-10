@@ -322,15 +322,17 @@ def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
-    (0.1, r_speed, ["kick_speed_x", "fps"]),
+    (0.7, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
-    (0.1, r_off_share,   []),
-    (0.1, r_def_share,   []),
+    (0.1, r_off,   []),
+    (0.1, r_def,   []),
     #(0.3, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
-    (0.6, r_wheel,   []),
+    #(0.6, r_wheel,   []),
 ]
 
 SPARSE_REWARDS = {
-    "GOAL_REWARD": 300, # robot that scored gets this reward and the other team gets negative this reward
-    "OUTSIDE_REWARD": -10 # the team of the last robot that touched the ball gets this reward
+    "GOAL_REWARD": 10, # robot that scored gets this reward and the other team gets negative this reward
+    "OUTSIDE_REWARD": -10, # the team of the last robot that touched the ball gets this reward
+    "OPPONENT_DEFENSE_AREA": -1,
+    "TEAM_DEFENSE_AREA": -1
 }

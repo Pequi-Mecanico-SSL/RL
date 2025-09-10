@@ -20,7 +20,7 @@ import debugpy
 
 ray.init()
 
-CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_57cd5_00000_0_2025-08-22_05-10-38/checkpoint_000008"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
 CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
 NUM_EPS = 100
 
@@ -106,7 +106,7 @@ for ep in range(NUM_EPS):
         }
         if env.n_robots_blue > 0:
             a.update(agents.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
-
+        # a["blue_0"][-1]=0
         if env.n_robots_yellow > 0:
             a.update(agents.compute_actions(o_yellow, policy_id='policy_yellow', full_fetch=False))
 
@@ -114,8 +114,10 @@ for ep in range(NUM_EPS):
             a = env.action_space.sample()
         
         obs, reward, done, truncated, info = env.step(a)
-        #print(reward)
+        # breakpoint()
         env.render()
+        # print(env.judge_info)
+        #input()
         
         #input("Pess Enter to continue...")
 
