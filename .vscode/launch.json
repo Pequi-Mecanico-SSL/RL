@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "RL_eval",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+                "pathMappings": [ 
+                    {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/ws"
+                }
+            ]
+        },
+        {
+            "name": "RL_infer",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5679
+            },
+                "pathMappings": [ 
+                    {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/ws"
+                }
+            ]
+        }
+    ]
+}

@@ -155,7 +155,7 @@ def r_def(field, frame, last_frame, **kwargs):
     return reward
 
 
-def r_off_single(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+def r_off_share(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
     robots_left = frame.robots_blue
     robots_right = frame.robots_yellow
@@ -189,7 +189,7 @@ def r_off_single(field: Field, frame: Frame, last_frame: Frame, **kwargs):
     return reward
 
 
-def r_def_single(field, frame, last_frame, **kwargs):
+def r_def_share(field, frame, last_frame, **kwargs):
     robots_left = frame.robots_blue
     robots_right = frame.robots_yellow
     if kwargs["right"] == "blue":
@@ -221,12 +221,113 @@ def r_def_single(field, frame, last_frame, **kwargs):
     
     return reward
 
+#@show_reward
+def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+    """
+    Reward for passing the ball to an ally or intercepting a pass from an opponent.
+    """
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    judge_info = kwargs["judge_info"]
+    judge_last_info = kwargs["judge_last_info"]
+
+    if (
+        judge_last_info["last_touch"] is None or
+        judge_info["ball_possession"] is None or 
+        judge_info["ball_possession"] == judge_last_info["last_touch"]
+    ):
+        # There is no pass, so we return a reward of 0 for all robots
+        return {
+            **{f"{kwargs['left']}_{idx}": 0 for idx in range(len(robots_left))},
+            **{f"{kwargs['right']}_{idx}": 0 for idx in range(len(robots_right))},
+        }
+    
+    team_color_judge = judge_info["ball_possession"].split("_")[0]
+    team_color_judge_last = judge_last_info["last_touch"].split("_")[0]
+
+    pass_team = judge_info["last_touch"].split("_")[0]
+    opposite_team = "yellow" if pass_team == "blue" else "blue"
+
+    if team_color_judge == team_color_judge_last:
+        # The pass was made to an ally
+        #print(f"Pass made! opposite_team: {opposite_team}, pass_team: {pass_team}")
+        reward = {
+            **{f"{pass_team}_{idx}": 1 for idx in range(len(robots_left))},
+            **{f"{opposite_team}_{idx}": -1 for idx in range(len(robots_right))},
+        }
+
+    if team_color_judge != team_color_judge_last:
+        # The pass was intercepted by an opponent
+        #print(f"Intercept made! opposite_team: {opposite_team}, pass_team: {pass_team}")
+        reward = {
+            **{f"{pass_team}_{idx}": -1 for idx in range(len(robots_left))},
+            **{f"{opposite_team}_{idx}": 1 for idx in range(len(robots_right))},
+        }
+    
+    #print(reward)
+
+    return reward
+
+def r_collision(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    n_left = len(robots_left)
+    n_right = len(robots_right)
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    robots = [[r.x, r.y] for r in robots_left.values()]
+    robots.extend([[r.x, r.y] for r in robots_right.values()])
+    robots = np.array(robots)
+
+    dot = robots @ robots.T
+    norm_2 = dot.diagonal()
+    dist_mat = np.sqrt(norm_2[None, :] + norm_2[:, None] - 2*dot) # broadcasting
+    dist_mat += 10**3*np.eye(len(robots))
+    dist_mat[:n_left, n_left:] = 10**3
+    dist_mat[n_left:, :n_left] = 10**3
+    
+    threshold = 0.5
+    collisions = (np.min(dist_mat, axis=1) < threshold).astype(np.int8)
+    
+    reward = {
+        **{f"{kwargs['left']}_{idx}":  -collisions[idx] for idx in range(n_left)},
+        **{f"{kwargs['right']}_{idx - n_left}": -collisions[idx] for idx in range(n_left, n_left + n_right)}
+    }
+
+    return reward
+
+def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+
+    robots_left = frame.robots_blue
+    robots_right = frame.robots_yellow
+    n_left = len(robots_left)
+    n_right = len(robots_right)
+    if kwargs["right"] == "blue":
+        robots_left, robots_right = robots_right, robots_left
+
+    wheel_rotation_left = [sum([r.v_wheel0**2, r.v_wheel1**2, r.v_wheel2**2, r.v_wheel3**2])**0.5 for r in robots_left.values()]
+    wheel_rotation_right = [sum([r.v_wheel0**2, r.v_wheel1**2, r.v_wheel2**2, r.v_wheel3**2])**0.5 for r in robots_right.values()]
+
+    reward = {
+        **{f"{kwargs['left']}_{idx}":  -wheel_rotation_left[idx]/190 for idx in range(n_left)},
+        **{f"{kwargs['right']}_{idx}": -wheel_rotation_right[idx]/190 for idx in range(n_right)}
+    }
+
+    return reward
+
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
     (0.7, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
     (0.1, r_off,   []),
     (0.1, r_def,   []),
+    #(0.3, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
+    #(0.6, r_wheel,   []),
 ]
 
 SPARSE_REWARDS = {
