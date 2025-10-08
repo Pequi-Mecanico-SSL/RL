@@ -4,7 +4,7 @@ checkpoint_freq: 25 # Salvar checkpoint a cada 100 iterações
 checkpoint_restore: null #/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003
 rllib:
   num_cpus: 7  # Depende do num_workers, tem que ser igual ou maior
-  num_gpus: 0
+  num_gpus: 1
   num_workers: 6  # Número de ambientes em paralelo, quanto maior, mais rápido
   num_envs_per_worker: 2 # Número de ambientes por worker, quanto maior, mais rápido
   #num_gpus_per_worker: 0.2 # fração de GPU usado por cada worker (< 1/num_workers), pode melhorar a performance, mas tem que investigar mais
@@ -57,3 +57,6 @@ env:
   possession_radius_scale: 3
   direction_change_threshold: 1
   render_mode: "human"
+  attacker_dense_rewards: ATTACKER_DENSE_REWARDS
+  defender_dense_rewards: DEFENDER_DENSE_REWARDS
+  sparse_rewards: SPARSE_REWARDS

@@ -320,6 +320,21 @@ def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
     return reward
 
+# Recompensas para o time de ATACANTES (Azul)
+ATTACKER_DENSE_REWARDS = [
+    (1.0, r_speed, ["kick_speed_x", "fps"]), 
+    (0.4, r_off_share, []),                     
+    (0.2, r_dist, []),                      
+    (0.1, r_collision, []),                 
+]
+
+# Recompensas para o time de DEFENSORES (Amarelo)
+DEFENDER_DENSE_REWARDS = [
+    (1.0, r_def_share, []),                    
+    (0.5, r_pass_or_intercept, ["judge_info", "judge_last_info"]), 
+    (0.1, r_collision, []),                 
+]
+
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
     (0.7, r_speed, ["kick_speed_x", "fps"]),
@@ -340,6 +355,5 @@ SPARSE_REWARDS = {
     "DEFENSE_GOAL_REWARD": 5,
     "DEFENSE_CLEAN_SHEET_BONUS": 15, # Bônus por não sofrer gol
     
-    # Recompensa geral
     "OUTSIDE_REWARD": -10 
 }
