@@ -79,6 +79,8 @@ class Sim2Real:
             alpha, beta = np.split(a, 2)
             action = np.random.beta(alpha, beta)
             action = action * 2 - 1
+            signal = np.array([-1, 1, -1, 1]) if "yellow" in robot_name else np.array([1, 1, 1, 1])
+            action = signal * action
 
             actions[robot_name] = action
 
@@ -343,3 +345,4 @@ if __name__ == "__main__":
             # print(env.judge_info)
             #input()
             #input("Pess Enter to continue...")
+        env.reset()
