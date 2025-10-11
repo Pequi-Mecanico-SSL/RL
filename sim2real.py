@@ -335,7 +335,7 @@ if __name__ == "__main__":
             }
 
             action = IA.state_to_action(state)
-            action.update({f"yellow_{i}": [0, 0, 1, 0]  for i in range(env.n_robots_yellow)})
+            action.update({f"yellow_{i}": [0, 0, 0, 0]  for i in range(env.n_robots_yellow)})
 
             obs, reward, done, truncated, info = env.step(action)
             # breakpoint()
