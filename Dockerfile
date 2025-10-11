@@ -57,6 +57,7 @@ COPY rewards.py .
 # COPY tests.py .
 # COPY sim2real /ws/sim2real
 # COPY sim2real.py .
+COPY w.pkl . 
 
 # RUN mkdir /ws/volume
 

@@ -9,6 +9,7 @@ docker run --gpus all --name pequi-ssl \
     -v $(pwd)/RL_eval.py:/ws/RL_eval.py \
     -v $(pwd)/RL_train.py:/ws/RL_train.py \
     -v $(pwd)/tests.py:/ws/tests.py \
+    -v $(pwd)/sim2real.py:/ws/sim2real.py \
     -p 5678:5678 \
     -p 5679:5679 \
     -it ssl-el

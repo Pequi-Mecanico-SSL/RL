@@ -40,8 +40,8 @@ class Sim2Real:
         self.goal_template = namedtuple('Goal', ['x', 'y'])
         self.ball_template = namedtuple('Ball', ['x', 'y'])
 
-    def state_to_action(self, state: dict) -> dict:
-        
+    def state_to_action(self, state: dict, convert=False) -> dict:
+
         # state to observation
         observations = self._state_to_observation(state)
 
@@ -69,9 +69,9 @@ class Sim2Real:
         for i, robot_name in enumerate(self.stack_observations.keys()):
             robot_obs = self.stack_observations[robot_name]
 
-            h1 = (robot_obs @ weights["_hidden_layers.0._model.0.weight"].T) + weights["_hidden_layers.0._model.0.bias"]
-            h2 = (h1 @ weights["_hidden_layers.1._model.0.weight"].T) + weights["_hidden_layers.1._model.0.bias"]
-            h3 = (h2 @ weights["_hidden_layers.2._model.0.weight"].T) + weights["_hidden_layers.2._model.0.bias"]
+            h1 = np.tanh((robot_obs @ weights["_hidden_layers.0._model.0.weight"].T) + weights["_hidden_layers.0._model.0.bias"])
+            h2 = np.tanh((h1 @ weights["_hidden_layers.1._model.0.weight"].T) + weights["_hidden_layers.1._model.0.bias"])
+            h3 = np.tanh((h2 @ weights["_hidden_layers.2._model.0.weight"].T) + weights["_hidden_layers.2._model.0.bias"])
             a = (h3 @ weights["_logits._model.0.weight"].T) + weights["_logits._model.0.bias"]
 
             a = np.clip(a, np.log(1e-06), -np.log(1e-06))
@@ -80,9 +80,11 @@ class Sim2Real:
             action = np.random.beta(alpha, beta)
             action = action * 2 - 1
 
-            #angle = np.deg2rad(state[robot_name][2])
-            #actions[robot_name] = self._convert_actions(action, angle)
             actions[robot_name] = action
+
+            if convert:
+                angle = state[robot_name][2]
+                actions[robot_name] = self._convert_actions(action, angle)
 
         self.steps += 1
         self.last_actions = actions.copy()
@@ -289,9 +291,27 @@ class Sim2Real:
         return np.array([v_x, v_y, v_theta, action[3]])
 
 
-
 if __name__ == "__main__":
     # testar a classe no ambiente SSLMultiAgentEnv
+    from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+    import yaml
+    from rewards import DENSE_REWARDS, SPARSE_REWARDS
+    from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
+
+
+    with open("config.yaml") as f:
+        # use safe_load instead load
+        file_configs = yaml.safe_load(f)
+
+    env_config = file_configs["env"]
+    env_config["match_time"] = 40
+    env_config["dense_rewards"] = DENSE_REWARDS
+    env_config["sparse_rewards"] = SPARSE_REWARDS
+    env_config["judge"] = Judge
+
+    env = SSLMultiAgentEnv(**env_config)
+    obs, *_ = env.reset()
+
 
     IA = Sim2Real(
         field_length=9.0,
@@ -299,16 +319,27 @@ if __name__ == "__main__":
         max_ep_length=30*40
     )
 
-    state = {
-        'blue_0': [-1.5, 0, 0],
-        'blue_1': [-2.0, -1.0, 0],
-        'blue_2': [-2.0, 1.0, 0],
-        'yellow_0': [1.5, 0, 0],
-        'yellow_1': [2.0, -1.0, 0],
-        'yellow_2': [2.0, 1.0, 0],
-        'ball': [0, 0]
-    }
+    while True:
+        done= {'__all__': False}
+        truncated = {'__all__': False}
+        while not done['__all__'] and not truncated['__all__']:
 
-    actions = IA.state_to_action(state)
+            state = {
+                'blue_0': [env.frame.robots_blue[0].x, env.frame.robots_blue[0].y, env.frame.robots_blue[0].theta],
+                'blue_1': [env.frame.robots_blue[1].x, env.frame.robots_blue[1].y, env.frame.robots_blue[1].theta],
+                'blue_2': [env.frame.robots_blue[2].x, env.frame.robots_blue[2].y, env.frame.robots_blue[2].theta],
+                'yellow_0': [env.frame.robots_yellow[0].x, env.frame.robots_yellow[0].y, env.frame.robots_yellow[0].theta],
+                'yellow_1': [env.frame.robots_yellow[1].x, env.frame.robots_yellow[1].y, env.frame.robots_yellow[1].theta],
+                'yellow_2': [env.frame.robots_yellow[2].x, env.frame.robots_yellow[2].y, env.frame.robots_yellow[2].theta],
+                'ball': [env.frame.ball.x, env.frame.ball.y]
+            }
 
-    print(actions)
+            action = IA.state_to_action(state)
+            action.update({f"yellow_{i}": [0, 0, 1, 0]  for i in range(env.n_robots_yellow)})
+
+            obs, reward, done, truncated, info = env.step(action)
+            # breakpoint()
+            env.render()
+            # print(env.judge_info)
+            #input()
+            #input("Pess Enter to continue...")
