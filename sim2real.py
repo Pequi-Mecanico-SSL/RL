@@ -40,8 +40,37 @@ class Sim2Real:
         self.goal_template = namedtuple('Goal', ['x', 'y'])
         self.ball_template = namedtuple('Ball', ['x', 'y'])
 
-    def state_to_action(self, state: dict, convert=False) -> dict:
+    def state_to_action(self, state: dict, convert: bool = True) -> dict:
+        """
+        Função que transforma o estado do ambiente em observações
+        
+        :Param: *state* estado do ambiente. dict[str, list[float]]
+            Exemplo:
+                state = {
+                    "blue_0": [x, y, theta],
+                    "blue_1": [x, y, theta],
+                    "blue_2": [x, y, theta],
+                    "yellow_0": [x, y, theta],
+                    "yellow_1": [x, y, theta],
+                    "yellow_2": [x, y, theta],
+                    "ball": [x, y]
+                }
+        :Param: *convert* se False, as saídas das ações serão entre -1 e 1 (sem unidade) e globais. 
+                Caso for True, as saidas serão locais para cada robô e os valores absolutos. Padrão é True.
 
+                
+        :Return: *actions* ações para cada robô. dict[str, list[float]]
+            Exemplo:
+                actions = {
+                    "blue_0": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                    "blue_1": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                    "blue_2": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                    "yellow_0": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                    "yellow_1": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                    "yellow_2": [vel_x (m/s), vel_y (m/s),  vel_theta (graus/s), vel_x_kick (m/s)],
+                }
+
+        """
         # state to observation
         observations = self._state_to_observation(state)
 
