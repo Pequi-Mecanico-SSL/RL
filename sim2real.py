@@ -111,7 +111,7 @@ class Sim2Real:
             signal = np.array([-1, 1, -1, 1]) if "yellow" in robot_name else np.array([1, 1, 1, 1])
             action = signal * action
 
-            actions[robot_name] = action
+            actions[robot_name] = action.tolist()
 
             if convert:
                 angle = state[robot_name][2]
@@ -325,75 +325,75 @@ class Sim2Real:
 if __name__ == "__main__":
     # testar a classe no ambiente SSLMultiAgentEnv
 
-    IA = Sim2Real(
-        field_length=9.0,
-        field_width=6.0,
-        max_ep_length=30*40
-    )
-
-    state = {
-        'blue_0': [-1.5, 0, 0],
-        'blue_1': [-2.0, -1.0, 0],
-        'blue_2': [-2.0, 1.0, 0],
-        'yellow_0': [1.5, 0, 0],
-        'yellow_1': [2.0, -1.0, 0],
-        'yellow_2': [2.0, 1.0, 0],
-        'ball': [0, 0]
-    }
-
-    actions = IA.state_to_action(state, convert=True)
-
-    print(actions)
-
-
-    # from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
-    # import yaml
-    # from rewards import DENSE_REWARDS, SPARSE_REWARDS
-    # from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
-
-
-    # with open("config.yaml") as f:
-    #     # use safe_load instead load
-    #     file_configs = yaml.safe_load(f)
-
-    # env_config = file_configs["env"]
-    # env_config["match_time"] = 40
-    # env_config["dense_rewards"] = DENSE_REWARDS
-    # env_config["sparse_rewards"] = SPARSE_REWARDS
-    # env_config["judge"] = Judge
-
-    # env = SSLMultiAgentEnv(**env_config)
-    # obs, *_ = env.reset()
-
-
     # IA = Sim2Real(
     #     field_length=9.0,
     #     field_width=6.0,
     #     max_ep_length=30*40
     # )
 
-    # while True:
-    #     done= {'__all__': False}
-    #     truncated = {'__all__': False}
-    #     while not done['__all__'] and not truncated['__all__']:
+    # state = {
+    #     'blue_0': [-1.5, 0, 0],
+    #     'blue_1': [-2.0, -1.0, 0],
+    #     'blue_2': [-2.0, 1.0, 0],
+    #     'yellow_0': [1.5, 0, 0],
+    #     'yellow_1': [2.0, -1.0, 0],
+    #     'yellow_2': [2.0, 1.0, 0],
+    #     'ball': [0, 0]
+    # }
 
-    #         state = {
-    #             'blue_0': [env.frame.robots_blue[0].x, env.frame.robots_blue[0].y, env.frame.robots_blue[0].theta],
-    #             'blue_1': [env.frame.robots_blue[1].x, env.frame.robots_blue[1].y, env.frame.robots_blue[1].theta],
-    #             'blue_2': [env.frame.robots_blue[2].x, env.frame.robots_blue[2].y, env.frame.robots_blue[2].theta],
-    #             'yellow_0': [env.frame.robots_yellow[0].x, env.frame.robots_yellow[0].y, env.frame.robots_yellow[0].theta],
-    #             'yellow_1': [env.frame.robots_yellow[1].x, env.frame.robots_yellow[1].y, env.frame.robots_yellow[1].theta],
-    #             'yellow_2': [env.frame.robots_yellow[2].x, env.frame.robots_yellow[2].y, env.frame.robots_yellow[2].theta],
-    #             'ball': [env.frame.ball.x, env.frame.ball.y]
-    #         }
+    # actions = IA.state_to_action(state, convert=False)
 
-    #         action = IA.state_to_action(state)
-    #         action.update({f"yellow_{i}": [0, 0, 0, 0]  for i in range(env.n_robots_yellow)})
+    # print(actions)
 
-    #         obs, reward, done, truncated, info = env.step(action)
-    #         # breakpoint()
-    #         env.render()
-    #         # print(env.judge_info)
-    #         #input()
-    #         #input("Pess Enter to continue...")
-    #     env.reset()
+
+    from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+    import yaml
+    from rewards import DENSE_REWARDS, SPARSE_REWARDS
+    from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
+
+
+    with open("config.yaml") as f:
+        # use safe_load instead load
+        file_configs = yaml.safe_load(f)
+
+    env_config = file_configs["env"]
+    env_config["match_time"] = 40
+    env_config["dense_rewards"] = DENSE_REWARDS
+    env_config["sparse_rewards"] = SPARSE_REWARDS
+    env_config["judge"] = Judge
+
+    env = SSLMultiAgentEnv(**env_config)
+    obs, *_ = env.reset()
+
+
+    IA = Sim2Real(
+        field_length=9.0,
+        field_width=6.0,
+        max_ep_length=30*40
+    )
+
+    while True:
+        done= {'__all__': False}
+        truncated = {'__all__': False}
+        while not done['__all__'] and not truncated['__all__']:
+
+            state = {
+                'blue_0': [env.frame.robots_blue[0].x, env.frame.robots_blue[0].y, env.frame.robots_blue[0].theta],
+                'blue_1': [env.frame.robots_blue[1].x, env.frame.robots_blue[1].y, env.frame.robots_blue[1].theta],
+                'blue_2': [env.frame.robots_blue[2].x, env.frame.robots_blue[2].y, env.frame.robots_blue[2].theta],
+                'yellow_0': [env.frame.robots_yellow[0].x, env.frame.robots_yellow[0].y, env.frame.robots_yellow[0].theta],
+                'yellow_1': [env.frame.robots_yellow[1].x, env.frame.robots_yellow[1].y, env.frame.robots_yellow[1].theta],
+                'yellow_2': [env.frame.robots_yellow[2].x, env.frame.robots_yellow[2].y, env.frame.robots_yellow[2].theta],
+                'ball': [env.frame.ball.x, env.frame.ball.y]
+            }
+
+            action = IA.state_to_action(state)
+            action.update({f"yellow_{i}": [0, 0, 0, 0]  for i in range(env.n_robots_yellow)})
+
+            obs, reward, done, truncated, info = env.step(action)
+            # breakpoint()
+            env.render()
+            # print(env.judge_info)
+            #input()
+            #input("Pess Enter to continue...")
+        env.reset()
