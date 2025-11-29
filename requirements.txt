@@ -8,3 +8,4 @@ opencv-python==4.10.0.84
 tqdm==4.66.5
 ray[rllib]==2.10.0
 moviepy==1.0.3
+pyarrow==20.0.0

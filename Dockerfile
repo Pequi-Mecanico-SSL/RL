@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir setuptools==65.5.0 pip==21 wheel==0.38.0
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Instalar rSim
-RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
+#RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
 
 RUN mkdir videos
 COPY scripts/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
