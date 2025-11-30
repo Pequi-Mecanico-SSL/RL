@@ -1,3 +1,4 @@
 [submodule "rSoccer"]
 	path = rSoccer
 	url = https://github.com/Pequi-Mecanico-SSL/rSoccer.git
+	branch = main

@@ -3,4 +3,7 @@ config_rllib_example.json
 teste.ipynb
 rsoccer_gym.egg-info/
 build/
-volumes/dgx_checkpoints/*
+test*
+venv/
+*.ipynb
+volumes/*

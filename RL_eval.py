@@ -1,4 +1,5 @@
 import yaml
+import pickle
 
 import ray
 from ray.rllib.algorithms.ppo import PPOConfig
@@ -9,14 +10,21 @@ from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
 from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
+from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
 from observations import OBSERVATIONS
 import time
+import debugpy
+
+# debugpy.listen(("0.0.0.0", 5678))
+# input("Aguardando o debugger...")
 
 ray.init()
 
-CHECKPOINT_PATH = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_28842_00000_0_2024-12-06_02-52-40/checkpoint_000007"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
+CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
+NUM_EPS = 100
 
 def create_rllib_env(config):
     stack_size = config.pop("stack_size")
@@ -41,6 +49,7 @@ configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
 
 configs["env_config"] = file_configs["env"]
+configs["env_config"]["judge"] = Judge
 #configs["env_config"]["init_pos"]["ball"] = [random.uniform(-2, 2), random.uniform(-1.2, 1.2)]
 ray.tune.registry._unregister_all()
 ray.tune.registry.register_env("Soccer", create_rllib_env)
@@ -69,10 +78,19 @@ configs["model"] = {
     "custom_action_dist": "beta_dist",
 }
 configs["env"] = "Soccer"
+configs["num_cpus"] = 1
 
-agent = PPOConfig.from_dict(configs).build()
+agents = PPOConfig.from_dict(configs).build()
+agents.restore(CHECKPOINT_PATH_BLUE)
+#breakpoint()
 
-agent.restore(CHECKPOINT_PATH)
+with open(f"{CHECKPOINT_PATH_YELLOW}/policies/policy_blue/policy_state.pkl", "rb") as f:
+    policy_state = pickle.load(f)
+#breakpoint()
+agents.set_weights({
+    "policy_yellow": policy_state["weights"],
+})
+#breakpoint()
 
 configs["env_config"]["match_time"] = 40
 configs["env_config"]["dense_rewards"] = DENSE_REWARDS
@@ -80,29 +98,36 @@ configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
 env = create_rllib_env(configs["env_config"].copy())
 obs, *_ = env.reset()
 
-done= {'__all__': False}
 e= 0.0
-while True:
-    o_blue = {f"blue_{i}": obs[f"blue_{i}"] for i in range(env.n_robots_blue)}
-    o_yellow = {f"yellow_{i}": obs[f"yellow_{i}"] for i in range(env.n_robots_yellow)}
+for ep in range(NUM_EPS):
+    done= {'__all__': False}
+    truncated = {'__all__': False}
+    while not done['__all__'] and not truncated['__all__']:
+        o_blue = {f"blue_{i}": obs[f"blue_{i}"] for i in range(env.n_robots_blue)}
+        o_yellow = {f"yellow_{i}": obs[f"yellow_{i}"] for i in range(env.n_robots_yellow)}
 
-    a = {}
-    if env.n_robots_blue > 0:
-        a.update(agent.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
+        a = {
+            **{f"blue_{i}": [0, 0, 0, 0] for i in range(env.n_robots_blue)},
+            **{f"yellow_{i}": [0, 0, 0, 0]  for i in range(env.n_robots_yellow)}
+        }
+        if env.n_robots_blue > 0:
+            a.update(agents.compute_actions(o_blue, policy_id='policy_blue', full_fetch=False))
+        # a["blue_0"][-1]=0
+        if env.n_robots_yellow > 0:
+            a.update(agents.compute_actions(o_yellow, policy_id='policy_yellow', full_fetch=False))
 
-    if env.n_robots_yellow > 0:
-        a.update(agent.compute_actions(o_yellow, policy_id='policy_yellow', full_fetch=False))
+        if np.random.rand() < e:
+            a = env.action_space.sample()
+        
+        obs, reward, done, truncated, info = env.step(a)
+        # breakpoint()
+        env.render()
+        # print(env.judge_info)
+        #input()
+        
+        #input("Pess Enter to continue...")
 
-    if np.random.rand() < e:
-         a = env.action_space.sample()
-
-    obs, reward, done, truncated, info = env.step(a)
-    #print(reward)
-    env.render()
-    input("Pess Enter to continue...")
-
-    if done['__all__'] or truncated['__all__']:
-
-        obs, *_ = env.reset()
-        break
+    print(f"Ep: {ep:>4} | Score: {info['blue_0']['score']}")
+    obs, *_ = env.reset()
+            # break
     #time.sleep(1)

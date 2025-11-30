@@ -4,6 +4,9 @@ import yaml
 from collections import deque
 import numpy as np
 from typing import Dict
+import pickle
+import re
+from datetime import datetime
 
 import ray
 from ray import air, tune
@@ -15,16 +18,17 @@ from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
 from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
+from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from torch.utils.tensorboard import SummaryWriter
-import os
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
 from observations import OBSERVATIONS
 import time
 
-# RAY_PDB=1 python rllib_multiagent.py
+# RAY_PDB=1 python RL_eval.py
 # ray debug
+parent_directory = "/root/ray_results/PPO_selfplay_rec"
 
 def create_rllib_env_recorder(config):
     trigger = lambda t: t % 1 == 0
@@ -53,6 +57,38 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     elif "yellow" in agent_id:
         pol_id = "policy_yellow"
     return pol_id
+
+def find_latest_experiment(parent_dir):
+    # Define the regex pattern for the directory name
+    pattern = r"PPO_Soccer_\w+_\d+_\d+_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
+    experiments_dirs = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
+    matching_exp = [d for d in experiments_dirs if re.match(pattern, d)]
+    matching_exp.sort(key=lambda x: datetime.strptime("_".join(x.split('_')[-2:]), "%Y-%m-%d_%H-%M-%S"), reverse=True)
+    latest_exp = matching_exp[0] if len(matching_exp) > 0 else None
+
+    if latest_exp is None:
+        return None
+    
+    # Define the regex pattern for the checkpoint directory name
+    checkpoint_pattern = r"checkpoint_\d{6}"
+    checkpoint_dirs = [d for d in os.listdir(os.path.join(parent_dir, latest_exp)) if os.path.isdir(os.path.join(parent_dir, latest_exp, d))]
+    matching_checkpoints = [d for d in checkpoint_dirs if re.match(checkpoint_pattern, d)]
+    matching_checkpoints.sort(key=lambda x: int(x.split('_')[-1]), reverse=True)
+    latest_checkpoint = matching_checkpoints[0] if len(matching_checkpoints) > 0 else None
+
+    if latest_checkpoint is None:
+        return None
+
+    full_checkpoint_path = os.path.join(parent_dir, latest_exp, latest_checkpoint)
+    return full_checkpoint_path
+    
+def save_checkpoint_weights(checkpoint_path):
+    with open(f"{checkpoint_path}/policies/policy_blue/policy_state.pkl", "rb") as f:
+        policy_state = pickle.load(f)
+
+    # save checkpoint weights
+    with open(f"{checkpoint_path}/policies/policy_blue/policy_weights.pkl", "wb") as f:
+        pickle.dump(policy_state, f)
 
 @ray.remote
 class ScoreCounter:
@@ -109,7 +145,9 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
                 }
             )
             score_counter = ray.get_actor("score_counter")
+            print(f"score_couter before reset {current_score}")
             score_counter.reset.remote()
+            print(f"score_couter after reset {ray.get(score_counter.get_score.remote())}")
 
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")
@@ -128,6 +166,7 @@ if __name__ == "__main__":
         maxlen=file_configs["score_average_over"]
     )
     configs["env_config"] = file_configs["env"]
+    configs["env_config"]["judge"] = Judge
 
     tune.registry.register_env("Soccer", create_rllib_env)
     tune.registry.register_env("Soccer_recorder", create_rllib_env_recorder)
@@ -171,19 +210,36 @@ if __name__ == "__main__":
         configs["evaluation_config"] = eval_configs["evaluation_config"].copy()
         configs["evaluation_config"]["env_config"] = env_config_eval
 
-    analysis = tune.run(
-        "PPO",
-        name="PPO_selfplay_rec",
-        config=configs,
-        stop={
-            "timesteps_total": int(file_configs["timesteps_total"]),
-        },
-        checkpoint_freq=int(file_configs["checkpoint_freq"]),
-        checkpoint_at_end=True,
-        local_dir=os.path.abspath("volume"),
-        #resume=True,
-        restore=file_configs["checkpoint_restore"],
-    )
+    try:
+        analysis = tune.run(
+            "PPO",
+            name="PPO_selfplay_rec",
+            config=configs,
+            stop={
+                "timesteps_total": int(file_configs["timesteps_total"]),
+            },
+            checkpoint_freq=int(file_configs["checkpoint_freq"]),
+            checkpoint_at_end=True,
+            local_dir=os.path.abspath("volume"),
+            #resume=True,
+            restore=file_configs["checkpoint_restore"],
+        )
+    except Exception as e:
+        latest_experiment = find_latest_experiment(parent_directory)
+        if latest_experiment is None:
+            print("No valid experiment found")
+        else:
+            save_checkpoint_weights(latest_experiment)
+            print(f"Checkpoint weights saved from {latest_experiment}")
+        raise e
+    finally:
+        latest_experiment = find_latest_experiment(parent_directory)
+        if latest_experiment is None:
+            print("No valid experiment found")
+        else:
+            save_checkpoint_weights(latest_experiment)
+            print(f"Checkpoint weights saved from {latest_experiment}")
+            
 
     best_trial = analysis.get_best_trial("episode_reward_mean", mode="max")
     print(best_trial)

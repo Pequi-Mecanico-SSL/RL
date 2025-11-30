@@ -70,17 +70,17 @@ $$OUTSIDE_{REWARD} = -10$$
 
 **Construa a imagem:**
 
-    docker build -t ssl-el .
+   sudo docker build -t ssl-el .
 
 **Rode o container**
 
 O commando a abaixo irá criar três volumes. O primeiro para salvar os checkpoints do treinamento. O segundo para salvar videos gravados do ambiente durante o treinamento. Por fim, o terceiro é apenas para usar o display para renderizar o ambiente do container.
 
-    docker run --gpus all --name pequi-ssl \
+    sudo docker run --gpus all --name pequi-ssl \
         -e DISPLAY=$DISPLAY \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
-        -v $(pwd)/videos:/ws/videos \
-        -v $(pwd)/dgx_checkpoints/PPO_selfplay_rec:/root/ray_results/PPO_selfplay_rec \
+        -v $(pwd)/volumes/videos:/ws/videos \
+        -v $(pwd)/volumes/dgx_checkpoints/PPO_selfplay_rec:/root/ray_results/PPO_selfplay_rec \
         -it ssl-el
 
 **Para conseguir renderizar um episódio** 
@@ -115,7 +115,7 @@ Olhe a pasta dgx_checkpoints (volume) fora do container, se você já realizou a
 * **Nome do exemperiemento:** PPO_Soccer_95caf_00000_0_2024-11-21_02-23-24
 * **Número do checkpoint:** checkpoint_000001
 
-Com isso anotado, abra o arquivo `RL_evalpy` e altere a variável global CHECKPOINT_PATH, substuindo o nome do experiemento e número do checkpoint, o restante do caminho deve permanecer o mesmo. A estrutura deve ser: 
+Com isso anotado, abra o arquivo `RL_eval.py` e altere a variável global CHECKPOINT_PATH, substuindo o nome do experiemento e número do checkpoint, o restante do caminho deve permanecer o mesmo. A estrutura deve ser: 
 
     /root/ray_results/PPO_selfplay_rec/NOME_DO_EXPERIEMENTO/NUMERO_DO_CHECKPOINT
 

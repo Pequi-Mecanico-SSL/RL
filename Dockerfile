@@ -21,6 +21,7 @@ RUN apt-get update && \
     python3-pyqt5 \
     python3-pyqtgraph \
     mesa-utils \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
@@ -48,8 +49,9 @@ RUN mkdir /ws/rSoccer
 COPY rSoccer /ws/rSoccer
 RUN cd /ws/rSoccer && pip install .
 
-COPY RL_train.py .
-COPY RL_eval.py .
+# COPY RL_train.py .
+#COPY RL_eval.py .
+#COPY RL_infer.py .
 COPY config.yaml .
 COPY rewards.py .
 COPY observations.py .
