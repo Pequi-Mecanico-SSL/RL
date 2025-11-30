@@ -52,6 +52,7 @@ env:
       3: [ 2.0, -1.0,  180.0]
     ball: [0, 0]
   field_type: 1
+  stack_size: 8 # número de frames empilhados na observação
   fps: 30 # frames por segundo
   match_time: 40 # duração da partida em segundos
   render_mode: "human"

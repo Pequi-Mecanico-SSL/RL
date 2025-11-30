@@ -6,10 +6,20 @@ from collections import namedtuple
 
 @decorator_observations
 def positions_observations(main_idx: str, main: dict, allys: list[dict], advs: list[dict], ball: dict, **kwargs):
+    field_hlen, field_hwid =(
+        kwargs["field_info"]["length"]/2,
+        kwargs["field_info"]["width"]/2
+    )
     positions = np.zeros(0)
     for robot in [main] + allys + advs:
-        positions = np.hstack([positions, [robot['x'], robot['y']]])
-    positions = np.hstack([positions, [ball['x'], ball['y']]])    
+        positions = np.hstack([positions, [
+            np.clip(robot['x']/field_hlen, -1, 1), 
+            np.clip(robot['y']/field_hwid, -1, 1)
+        ]])
+    positions = np.hstack([positions, [
+        np.clip(ball['x']/field_hlen, -1, 1), 
+        np.clip(ball['y']/field_hwid, -1, 1)
+    ]])    
     return positions
 
 
@@ -18,11 +28,11 @@ def oritations_observations(main_idx: str, main: dict, allys: list[dict], advs: 
     orientations = np.zeros(0)
     for robot in [main] + allys + advs:
         theta, sin, cos = (
-            np.deg2rad(robot['theta']), 
+            np.deg2rad(robot['theta'])/(2*np.pi), 
             np.sin(np.deg2rad(robot['theta'])), 
             np.cos(np.deg2rad(robot['theta']))
         )
-        orientations = np.hstack([orientations, [theta, sin, cos]])
+        orientations = np.hstack([orientations, [sin, cos, theta]])
         
     return orientations
 
@@ -101,7 +111,7 @@ def actions_observations(main_idx: str, main: dict, allys: list[dict], advs: lis
 
 OBSERVATIONS = [
     #(function,                 [required_kwargs,])
-    (positions_observations,    []),
+    (positions_observations,    ["field_info"]),
     (oritations_observations,   []),
     (distances_observations,    ["field_info"]),
     (angles_observations,       ["field_info"]),
