@@ -9,9 +9,11 @@ import numpy as np
 from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
 from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
+from observations import OBSERVATIONS
 import time
 import debugpy
 
@@ -25,8 +27,12 @@ CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_
 NUM_EPS = 100
 
 def create_rllib_env(config):
-    #breakpoint()
-    return SSLMultiAgentEnv(**config)
+    stack_size = config.pop("stack_size", 8)
+    return StackWrapper(
+        SSLMultiAgentEnv(**config),
+        stack_size=stack_size,
+        observation_funcs=OBSERVATIONS
+    )
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     if "blue" in agent_id:
@@ -44,6 +50,7 @@ configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
 configs["env_config"] = file_configs["env"]
 configs["env_config"]["judge"] = Judge
+configs["stack_size"] = 8
 #configs["env_config"]["init_pos"]["ball"] = [random.uniform(-2, 2), random.uniform(-1.2, 1.2)]
 ray.tune.registry._unregister_all()
 ray.tune.registry.register_env("Soccer", create_rllib_env)
@@ -89,7 +96,7 @@ agents.set_weights({
 configs["env_config"]["match_time"] = 40
 configs["env_config"]["dense_rewards"] = DENSE_REWARDS
 configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
-env = SSLMultiAgentEnv(**configs["env_config"])
+env = create_rllib_env(configs["env_config"].copy())
 obs, *_ = env.reset()
 
 e= 0.0
@@ -120,7 +127,6 @@ for ep in range(NUM_EPS):
         #input()
         
         #input("Pess Enter to continue...")
-
     print(f"Ep: {ep:>4} | Score: {info['blue_0']['score']}")
     obs, *_ = env.reset()
             # break

@@ -17,11 +17,13 @@ from ray.rllib.evaluation.episode import Episode
 from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
+from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
 from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
 
 from torch.utils.tensorboard import SummaryWriter
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
+from observations import OBSERVATIONS
 import time
 
 # RAY_PDB=1 python RL_eval.py
@@ -31,13 +33,25 @@ parent_directory = "/root/ray_results/PPO_selfplay_rec"
 def create_rllib_env_recorder(config):
     trigger = lambda t: t % 1 == 0
     config["render_mode"] = "rgb_array"
-    ssl_el_env = SSLMultiAgentEnv(**config)
-    return SSLMultiAgentEnv_record(ssl_el_env, video_folder="/ws/videos", episode_trigger=trigger, disable_logger=True)
+    stack_size = config.pop("stack_size")
+    ssl_el_env = SSLMultiAgentEnv_record(SSLMultiAgentEnv(**config), video_folder="/ws/videos", episode_trigger=trigger, disable_logger=True)
+
+    return StackWrapper(
+        ssl_el_env,
+        stack_size=stack_size,
+        observation_funcs=OBSERVATIONS
+    )
 
 def create_rllib_env(config):
-    return SSLMultiAgentEnv(**config)
+    stack_size = config.pop("stack_size")
+    return StackWrapper(
+        SSLMultiAgentEnv(**config),
+        stack_size=stack_size,
+        observation_funcs=OBSERVATIONS
+    )
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
+    pol_id = ""
     if "blue" in agent_id:
         pol_id = "policy_blue"
     elif "yellow" in agent_id:
@@ -156,7 +170,7 @@ if __name__ == "__main__":
 
     tune.registry.register_env("Soccer", create_rllib_env)
     tune.registry.register_env("Soccer_recorder", create_rllib_env_recorder)
-    temp_env = create_rllib_env(configs["env_config"])
+    temp_env = create_rllib_env(configs["env_config"].copy())
     obs_space = temp_env.observation_space["blue_0"]
     act_space = temp_env.action_space["blue_0"]
     temp_env.close()

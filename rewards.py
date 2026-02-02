@@ -12,28 +12,27 @@ def show_reward(reward_func, robot='blue_0'):
     return wrapper
 
 # @show_reward
-def r_speed(field: Field, frame: Frame, last_frame: Frame, **kwargs):
-    robots_left = frame.robots_blue
-    robots_right = frame.robots_yellow
+def r_speed(field: dict, frame: dict, last_frame: dict, **kwargs):
+    robots_left = [v for k, v in frame.items() if "blue" in k]
+    robots_right = [v for k, v in frame.items() if "yellow" in k]
     if kwargs["right"] == "blue":
         robots_left, robots_right = robots_right, robots_left
 
     kick_speed_x = kwargs["kick_speed_x"]
     time_per_frame = 1/kwargs["fps"]
-    last_ball = last_frame.ball
-    ball = frame.ball
+    last_ball = last_frame["ball"]
+    ball = frame["ball"]
     discount_factor = 0.01 # this is to penalize the dead ball
     
-    goal_right = np.array([ 0.2 + field.length/2, 0])
-    goal_left  = np.array([-0.2 - field.length/2, 0])
-
+    goal_right = np.array([ 0.2 + field["length"]/2, 0])
+    goal_left  = np.array([-0.2 - field["length"]/2, 0])
     # Calculate previous ball dist
-    last_ball_pos = np.array([last_ball.x, last_ball.y])
+    last_ball_pos = np.array([last_ball["x"], last_ball["y"]])
     last_ball_dist_left = np.linalg.norm(goal_left - last_ball_pos)
     last_ball_dist_right = np.linalg.norm(goal_right - last_ball_pos)
     
     # Calculate new ball dist
-    ball_pos = np.array([ball.x, ball.y])
+    ball_pos = np.array([ball["x"], ball["y"]])
     ball_dist_left  = np.linalg.norm(goal_left  - ball_pos)
     ball_dist_right = np.linalg.norm(goal_right - ball_pos)
 
@@ -56,14 +55,14 @@ def r_speed(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 
 # @show_reward
-def r_dist(field: Field, frame: Frame, last_frame: Frame, **kwargs):
-    robots_left = frame.robots_blue
-    robots_right = frame.robots_yellow
+def r_dist(field: dict, frame: dict, last_frame: dict, **kwargs):
+    robots_left = [v for k, v in frame.items() if "blue" in k]
+    robots_right = [v for k, v in frame.items() if "yellow" in k]
     if kwargs["right"] == "blue":
         robots_left, robots_right = robots_right, robots_left
 
-    ball = frame.ball
-    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
+    ball = frame["ball"]
+    geometry = Geometry2D(-field["length"]/2, field["length"]/2, -field["goal_width"]/2, field["goal_width"]/2)
     max_dist = 2.5 # this is to put a limit on the reward
 
     min_dist_left = max_dist
@@ -87,18 +86,17 @@ def r_dist(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 
 # @show_reward
-def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+def r_off(field: dict, frame: dict, last_frame: dict, **kwargs):
 
-    robots_left = frame.robots_blue
-    robots_right = frame.robots_yellow
+    robots_left = [v for k, v in frame.items() if "blue" in k]
+    robots_right = [v for k, v in frame.items() if "yellow" in k]
     if kwargs["right"] == "blue":
         robots_left, robots_right = robots_right, robots_left
 
-    ball = frame.ball
-    goal_template = namedtuple('goal', ['x', 'y'])
-    goal_right = goal_template(x=0.2 + field.length/2, y=0)
-    goal_left  = goal_template(x=-0.2 - field.length/2, y=0)
-    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
+    ball = frame["ball"]
+    goal_right = {"x": 0.2 + field["length"]/2, "y": 0}
+    goal_left  = {"x": -0.2 - field["length"]/2, "y": 0}
+    geometry = Geometry2D(-field["length"]/2, field["length"]/2, -field["goal_width"]/2, field["goal_width"]/2)
     
     left_robots_angle = []
     for idx in range(len(robots_left)):
@@ -123,17 +121,15 @@ def r_off(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 # @show_reward
 def r_def(field, frame, last_frame, **kwargs):
-    robots_left = frame.robots_blue
-    robots_right = frame.robots_yellow
+    robots_left = [v for k, v in frame.items() if "blue" in k]
+    robots_right = [v for k, v in frame.items() if "yellow" in k]
     if kwargs["right"] == "blue":
         robots_left, robots_right = robots_right, robots_left
 
-    ball = frame.ball
-    goal_template = namedtuple('goal', ['x', 'y'])
-    goal_right = goal_template(x= 0.2 + field.length/2, y= 0)
-    goal_left  = goal_template(x=-0.2 - field.length/2, y= 0)
-    geometry = Geometry2D(-field.length/2, field.length/2, -field.goal_width/2, field.goal_width/2)
-
+    ball = frame["ball"]
+    goal_right = {"x": 0.2 + field["length"]/2, "y": 0}
+    goal_left  = {"x": -0.2 - field["length"]/2, "y": 0}
+    geometry = Geometry2D(-field["length"]/2, field["length"]/2, -field["goal_width"]/2, field["goal_width"]/2)
     left_robots_angle = []
     for idx in range(len(robots_left)):
         robot = robots_left[idx]

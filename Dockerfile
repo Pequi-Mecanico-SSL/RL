@@ -54,8 +54,8 @@ RUN cd /ws/rSoccer && pip install .
 #COPY RL_infer.py .
 COPY config.yaml .
 COPY rewards.py .
-# COPY tests.py .
-# COPY sim2real /ws/sim2real
+COPY observations.py .
+COPY scripts/sim2real /ws/sim2real
 # COPY sim2real.py .
 
 # RUN mkdir /ws/volume
