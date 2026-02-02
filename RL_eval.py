@@ -27,7 +27,7 @@ CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_
 NUM_EPS = 100
 
 def create_rllib_env(config):
-    stack_size = config.pop("stack_size")
+    stack_size = config.pop("stack_size", 8)
     return StackWrapper(
         SSLMultiAgentEnv(**config),
         stack_size=stack_size,
@@ -50,6 +50,7 @@ configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
 configs["env_config"] = file_configs["env"]
 configs["env_config"]["judge"] = Judge
+configs["stack_size"] = 8
 #configs["env_config"]["init_pos"]["ball"] = [random.uniform(-2, 2), random.uniform(-1.2, 1.2)]
 ray.tune.registry._unregister_all()
 ray.tune.registry.register_env("Soccer", create_rllib_env)
@@ -126,7 +127,6 @@ for ep in range(NUM_EPS):
         #input()
         
         #input("Pess Enter to continue...")
-
     print(f"Ep: {ep:>4} | Score: {info['blue_0']['score']}")
     obs, *_ = env.reset()
             # break
