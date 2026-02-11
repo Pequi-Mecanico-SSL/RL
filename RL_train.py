@@ -34,12 +34,13 @@ def create_rllib_env_recorder(config):
     trigger = lambda t: t % 1 == 0
     config["render_mode"] = "rgb_array"
     stack_size = config.pop("stack_size")
-    ssl_el_env = SSLMultiAgentEnv_record(SSLMultiAgentEnv(**config), video_folder="/ws/videos", episode_trigger=trigger, disable_logger=True)
+    ssl_el_env = StackWrapper(SSLMultiAgentEnv(**config), stack_size=stack_size, observation_funcs=OBSERVATIONS)
 
-    return StackWrapper(
+    return SSLMultiAgentEnv_record(
         ssl_el_env,
-        stack_size=stack_size,
-        observation_funcs=OBSERVATIONS
+        video_folder="/ws/videos", 
+        episode_trigger=trigger, 
+        disable_logger=True
     )
 
 def create_rllib_env(config):
