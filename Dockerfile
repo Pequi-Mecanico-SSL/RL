@@ -37,25 +37,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 #RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
 
 RUN mkdir videos
-COPY scripts/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
-COPY scripts/gymnasium/video_recorder.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/monitoring/video_recorder.py
+COPY patches/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
+COPY patches/gymnasium/video_recorder.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/monitoring/video_recorder.py
 
 
-RUN mkdir /ws/scripts
+# RUN mkdir /ws/scripts
 COPY scripts /ws/scripts
 
-# Copy the rSoccer directory
-RUN mkdir /ws/rSoccer
-COPY rSoccer /ws/rSoccer
-RUN cd /ws/rSoccer && pip install .
 
 # COPY RL_train.py .
-#COPY RL_eval.py .
-#COPY RL_infer.py .
-COPY config.yaml .
-COPY rewards.py .
-COPY observations.py .
-COPY scripts/sim2real /ws/sim2real
+# COPY RL_eval.py .
+# COPY RL_infer.py .
+# COPY config.yaml .
+# COPY rewards.py .
+# COPY observations.py .
+# COPY scripts/sim2real /ws/sim2real
 # COPY sim2real.py .
 
 # RUN mkdir /ws/volume

@@ -7,14 +7,14 @@ A implementação feita usa o conceito de self-play para que robôs aprendam a j
 Um episódio é finalizado assim que um gol é marcado ou atinja um tempo limite. Caso a bola sai de campo, os jogadores e a bola são colocados nas suas posições iniciais e jogo continua.
 
 <div align="center">
-  <img src="./images/episodio.png" alt="Descrição da imagem" width="400">
+  <img src="./.github/resources/episodio.png" alt="Descrição da imagem" width="400">
 </div>
 
 ## Espaço de ações
 Um robô pode possui 4 ações continuas: alterar velocidade no eixo x, alterar velocidade no eixo y, alterar velocidade ângular, chutar a bola.
 
 <div align="center">
-  <img src="./images/actions.png" alt="Descrição da imagem" width="400">
+  <img src="./.github/resources/actions.png" alt="Descrição da imagem" width="400">
 </div>
 
 
@@ -51,7 +51,7 @@ Para guiar o aprendizado dos agentes há as recompensas contínuas, que dâo fee
 $$R_{total} = 0.7R_{speed} + 0.1R_{dist} + 0.1R_{off} + 0.1R_{def}$$
 
 <div align="center">
-  <img src="./images/rewards.png" alt="Descrição da imagem" width="800">
+  <img src="./.github/resources/rewards.png" alt="Descrição da imagem" width="800">
 </div>
 
 Em relação as recompensas esparsas há um total de 2, a primeira delas está relacionada ao gol marcado e a segunda quando a bola saí de campo:
