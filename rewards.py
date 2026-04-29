@@ -1,6 +1,6 @@
 import numpy as np
-from rSoccer.rsoccer_gym.Entities import Frame, Field
-from rSoccer.rsoccer_gym.Utils import Geometry2D
+from rsoccer_gym.Entities import Frame, Field
+from rsoccer_gym.Utils import Geometry2D
 from collections import namedtuple
 # kwargs vai ter kick_speed_x, fps, 
 
