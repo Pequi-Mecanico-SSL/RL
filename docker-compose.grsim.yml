@@ -1,0 +1,131 @@
+# Docker Compose para pipeline grSim + RL Policy com VNC
+# Este arquivo orquestra o simulador grSim (com VNC) e o deploy da policy RL
+#
+# Para visualizar o grSim:
+#   1. Inicie a pipeline: docker-compose -f docker-compose.grsim.yml up --build
+#   2. Conecte um VNC viewer em localhost:5900
+#   3. Senha VNC (opcional): robocup
+#
+# Versões disponíveis:
+#   - docker-compose.grsim.yml       : Modo VNC com rede bridge (recomendado)
+#   - docker-compose.grsim-vnc.yml   : Modo VNC com network host (melhor UDP)
+#   - docker-compose.grsim-headless.yml : Modo sem GUI (original)
+
+version: '3.8'
+
+services:
+  # Servico do simulador grSim com VNC
+  grsim:
+    image: robocupssl/grsim:latest
+    container_name: grsim_simulator
+    # Comando "vnc" ativa o modo VNC na imagem oficial
+    command: vnc
+    environment:
+      # Senha opcional para VNC (comente para sem senha)
+      - VNC_PASSWORD=robocup
+      # Resolucao do VNC (ajuste conforme sua tela)
+      - VNC_GEOMETRY=1920x1080
+      # Configuracoes de profundidade de cor
+      - VNC_DEPTH=24
+    ports:
+      # Porta VNC para acesso via viewer
+      - "5900:5900"
+      # Porta UDP para comandos dos robos
+      - "20011:20011/udp"
+      # Porta UDP para vision (multicast pode precisar de network host)
+      - "10002:10002/udp"
+    # Usar rede bridge para permitir mapeamento de portas (VNC acessivel via localhost)
+    networks:
+      - grsim-net
+    healthcheck:
+      test: ["CMD", "pgrep", "grSim"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Servico de deploy da policy RL
+  rl-policy:
+    build:
+      context: .
+      dockerfile: Dockerfile.policy
+    container_name: rl_policy_deploy
+    depends_on:
+      grsim:
+        condition: service_started
+    # Usar mesma rede bridge para comunicacao com grSim
+    networks:
+      - grsim-net
+    volumes:
+      # Montar checkpoints como read-only
+      - ./volumes/dgx_checkpoints:/checkpoints:ro
+      # Montar scripts (read-only)
+      - ./scripts:/app/scripts:ro
+      # Montar arquivos de configuracao e dependencias
+      - ./observations.py:/app/observations.py:ro
+      - ./rewards.py:/app/rewards.py:ro
+      - ./config.yaml:/app/config.yaml:ro
+      # Diretorio para logs (read-write)
+      - ./logs:/app/logs
+    environment:
+      # Caminho do checkpoint (ajustar conforme necessario)
+      - CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003
+      # Time a controlar (blue ou yellow)
+      - TEAM=blue
+      # Host do grSim (nome do servico no Docker Compose)
+      - GRSIM_HOST=grsim
+      # Porta de comandos do grSim
+      - GRSIM_PORT=20011
+      # Porta de vision do grSim
+      - VISION_PORT=10002
+      # Endereco multicast de vision (pode nao funcionar em bridge)
+      - VISION_ADDRESS=224.5.23.2
+      # Frames por segundo (deve bater com o treinamento)
+      - FPS=30
+      # Dispositivo para PyTorch (cpu ou cuda)
+      - DEVICE=cpu
+      # Nivel de log
+      - LOG_LEVEL=INFO
+      # Numero de robos por time
+      - N_ROBOTS_BLUE=3
+      - N_ROBOTS_YELLOW=3
+      # Tipo de campo (0=6vs6, 1=11vs11, 2=hardware)
+      - FIELD_TYPE=1
+    working_dir: /app
+    command: python deploy_policy.py
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure:3
+    # Limites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Servico opcional para visualizacao de logs
+  log-viewer:
+    image: alpine:latest
+    container_name: grsim_log_viewer
+    volumes:
+      - ./logs:/logs:ro
+    command: tail -f /logs/policy.log
+    profiles:
+      - logs
+    depends_on:
+      - rl-policy
+    networks:
+      - grsim-net
+
+# Rede bridge para comunicacao entre containers
+networks:
+  grsim-net:
+    driver: bridge

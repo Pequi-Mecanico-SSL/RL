@@ -1,0 +1,127 @@
+# Docker Compose para pipeline grSim + RL Policy com VNC (modo network host)
+# Esta versão usa network_mode: host para melhor performance UDP/multicast
+# O VNC é acessível pelo IP da máquina host na porta 5900
+#
+# Para visualizar o grSim:
+#   1. Inicie a pipeline: docker-compose -f docker-compose.grsim-vnc.yml up --build
+#   2. Descubra o IP da máquina: ip addr show
+#   3. Conecte um VNC viewer em <IP_DA_MAQUINA>:5900 (ex: 192.168.1.100:5900)
+#   4. Senha VNC (opcional): robocup
+#
+# Vantagens desta versão:
+#   - UDP multicast funciona perfeitamente (vision 224.5.23.2:10002)
+#   - Menor latência na comunicação
+#   - Melhor para produção/competição
+#
+# Desvantagens:
+#   - Precisa descobrir IP da máquina para conectar VNC
+#   - VNC acessível na rede (menos seguro)
+#   - Portas não mapeadas (usam portas do host diretamente)
+
+version: '3.8'
+
+services:
+  # Servico do simulador grSim com VNC (modo network host)
+  grsim:
+    image: robocupssl/grsim:latest
+    container_name: grsim_simulator
+    # Comando "vnc" ativa o modo VNC na imagem oficial
+    command: vnc
+    # Network host para UDP multicast funcionar
+    network_mode: host
+    environment:
+      # Senha opcional para VNC (comente para sem senha)
+      - VNC_PASSWORD=robocup
+      # Resolucao do VNC (ajuste conforme sua tela)
+      - VNC_GEOMETRY=1920x1080
+      # Configuracoes de profundidade de cor
+      - VNC_DEPTH=24
+    # Sem mapeamento de portas em network_mode: host
+    # VNC acessivel em: <IP_DO_HOST>:5900
+    # Ports UDP usadas diretamente do host:
+    #   - 20011/udp (comandos)
+    #   - 10002/udp (vision multicast)
+    healthcheck:
+      test: ["CMD", "pgrep", "grSim"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Servico de deploy da policy RL (tambem em network host)
+  rl-policy:
+    build:
+      context: .
+      dockerfile: Dockerfile.policy
+    container_name: rl_policy_deploy
+    depends_on:
+      grsim:
+        condition: service_started
+    # Network host para comunicacao UDP com grSim
+    network_mode: host
+    volumes:
+      # Montar checkpoints como read-only
+      - ./volumes/dgx_checkpoints:/checkpoints:ro
+      # Montar scripts (read-only)
+      - ./scripts:/app/scripts:ro
+      # Montar arquivos de configuracao e dependencias
+      - ./observations.py:/app/observations.py:ro
+      - ./rewards.py:/app/rewards.py:ro
+      - ./config.yaml:/app/config.yaml:ro
+      # Diretorio para logs (read-write)
+      - ./logs:/app/logs
+    environment:
+      # Caminho do checkpoint (ajustar conforme necessario)
+      - CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003
+      # Time a controlar (blue ou yellow)
+      - TEAM=blue
+      # Host do grSim (localhost em network host)
+      - GRSIM_HOST=127.0.0.1
+      # Porta de comandos do grSim
+      - GRSIM_PORT=20011
+      # Porta de vision do grSim
+      - VISION_PORT=10002
+      # Endereco multicast de vision
+      - VISION_ADDRESS=224.5.23.2
+      # Frames por segundo (deve bater com o treinamento)
+      - FPS=30
+      # Dispositivo para PyTorch (cpu ou cuda)
+      - DEVICE=cpu
+      # Nivel de log
+      - LOG_LEVEL=INFO
+      # Numero de robos por time
+      - N_ROBOTS_BLUE=3
+      - N_ROBOTS_YELLOW=3
+      # Tipo de campo (0=6vs6, 1=11vs11, 2=hardware)
+      - FIELD_TYPE=1
+    working_dir: /app
+    command: python deploy_policy.py
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure:3
+    # Limites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Servico opcional para visualizacao de logs
+  log-viewer:
+    image: alpine:latest
+    container_name: grsim_log_viewer
+    volumes:
+      - ./logs:/logs:ro
+    command: tail -f /logs/policy.log
+    profiles:
+      - logs
+    depends_on:
+      - rl-policy

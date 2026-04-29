@@ -1,0 +1,74 @@
+# Dockerfile para deploy de policies RL no grSim
+# Este Dockerfile cria uma imagem para executar as policies treinadas no simulador grSim
+
+FROM python:3.10-slim
+
+# Evita prompts interativos durante a instalacao
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+# Pickle do checkpoint importa rewards.py -> rSoccer.rsoccer_gym; observations usa rsoccer_gym.
+ENV PYTHONPATH=/app:/app/rSoccer
+
+# Instalar dependencias do sistema necessarias para compilacao e protobuf
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libprotobuf-dev \
+    protobuf-compiler \
+    libode-dev \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Definir diretorio de trabalho
+WORKDIR /app
+
+RUN pip install --upgrade pip setuptools==65.5.1 wheel
+
+# Instalar PyTorch CPU (mais leve que versao com CUDA)
+RUN pip install --no-cache-dir \
+    torch==2.0.1 \
+    torchvision==0.15.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Copiar e instalar dependencias Python
+COPY requirements.txt .
+
+# Criar requirements sem o gym antigo (usar gymnasium moderno)
+RUN grep -v "^gym==0.21.0" requirements.txt > /tmp/requirements_modern.txt && \
+    pip install --no-cache-dir -r /tmp/requirements_modern.txt
+
+# gym 0.21.0 nao instala com pip/packaging atuais; o deploy usa gymnasium (API compativel para spaces).
+# rc-robosim vem do requirements.txt (modulo import robosim; nao usar o pacote PyPI "robosim").
+
+# Codigo do ambiente (necessario para unpickle do policy_state e imports de rewards/observations)
+COPY rSoccer/ ./rSoccer/
+RUN pip install --no-cache-dir pygame
+
+# Copiar estrutura de scripts
+COPY scripts/ ./scripts/
+COPY observations.py .
+COPY rewards.py .
+COPY config.yaml .
+
+# Criar diretorio para checkpoints (sera montado como volume)
+RUN mkdir -p /checkpoints
+
+# Copiar script principal de deploy
+COPY deploy_policy.py .
+
+# Verificar instalacao
+RUN python -c "import torch; print(f'PyTorch: {torch.__version__}')" && \
+    python -c "import ray; print(f'Ray: {ray.__version__}')" && \
+    python -c "import numpy; print(f'NumPy: {numpy.__version__}')" && \
+    python -c "import gymnasium as gym; print(f'Gymnasium: {gym.__version__}')" && \
+    python -c "from rsoccer_gym.Entities import Frame, Field; print('rsoccer_gym: OK')"
+
+# Healthcheck para verificar se o script esta rodando
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
+
+# Comando padrao
+CMD ["python", "deploy_policy.py"]
