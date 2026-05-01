@@ -1,1 +1,1 @@
-from src.judges import Judge
+from src.judges.ssl_judge import Judge

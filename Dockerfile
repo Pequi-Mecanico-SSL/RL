@@ -43,6 +43,7 @@ COPY patches/gymnasium/video_recorder.py ../usr/local/lib/python3.10/site-packag
 
 # RUN mkdir /ws/scripts
 COPY scripts /ws/scripts
+COPY src /ws/src
 
 
 # COPY RL_train.py .

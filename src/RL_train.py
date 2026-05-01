@@ -14,11 +14,12 @@ from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.models import ModelCatalog
 from ray.rllib.evaluation.episode import Episode
 
-from scripts.model.custom_torch_model import CustomFCNet
-from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
-from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
-from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
-from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
+from src.models.custom_torch_model import CustomFCNet
+from src.models.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
+from src.objects.Config import InitialPosition, Config
+from src.simulators.rsoccer import SSLMultiAgentEnv#, SSLMultiAgentEnv_record
+from src.utils.wrappers import StackWrapper
+from src.judges.ssl_judge import Judge
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -166,12 +167,15 @@ if __name__ == "__main__":
     counter = ScoreCounter.options(name="score_counter").remote(
         maxlen=file_configs["score_average_over"]
     )
-    configs["env_config"] = file_configs["env"]
-    configs["env_config"]["judge"] = Judge
+    env_config = Config(
+        init_pos = InitialPosition(**file_configs["env"]["init_pos"]),
+        **file_configs["env"]
+    ).model_dump()
+    env_config["judge"] = Judge
 
     tune.registry.register_env("Soccer", create_rllib_env)
     tune.registry.register_env("Soccer_recorder", create_rllib_env_recorder)
-    temp_env = create_rllib_env(configs["env_config"].copy())
+    temp_env = create_rllib_env(env_config.copy())
     obs_space = temp_env.observation_space["blue_0"]
     act_space = temp_env.action_space["blue_0"]
     temp_env.close()
@@ -199,11 +203,11 @@ if __name__ == "__main__":
     }
     configs["env"] = "Soccer"
 
-    configs["env_config"]["dense_rewards"] = DENSE_REWARDS
-    configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
+    env_config["dense_rewards"] = DENSE_REWARDS
+    env_config["sparse_rewards"] = SPARSE_REWARDS
     if args.evaluation:
         eval_configs = file_configs["evaluation"].copy()
-        env_config_eval = file_configs["env"].copy()
+        env_config_eval = env_config.copy()
         configs["evaluation_interval"] = eval_configs["evaluation_interval"]
         configs["evaluation_num_workers"] = eval_configs["evaluation_num_workers"]
         configs["evaluation_duration"] = eval_configs["evaluation_duration"]

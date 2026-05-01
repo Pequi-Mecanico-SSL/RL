@@ -4,11 +4,10 @@ from src.objects import Frame, Ball, Robot, Field, InitialPosition
 from scipy.spatial import KDTree
 
 class Judge():
-    def __init__(self, field: Field, init_pos: dict, initial_frame: Frame = None, n_robots_blue=3, n_robots_yellow=3,
+    def __init__(self, field: Field, init_pos: dict, n_robots_blue=3, n_robots_yellow=3,
                  possession_radius_scale: float=3, direction_change_threshold: float=1,
                  left="blue", kickoff=True
         ):
-        breapoi
         self.field = field
         self.last_frame = None
         self.n_robots_blue = n_robots_blue
@@ -21,7 +20,7 @@ class Judge():
         self.direction_change_threshold = direction_change_threshold #in degrees
         self.left = left
 
-        self.init_pos = init_pos
+        self.init_pos = InitialPosition(**init_pos)
         self.frame = self._get_initial_positions_frame("kickoff")
         self.historical_ball_positions = set()
         self.is_kickoff = kickoff
@@ -159,8 +158,8 @@ class Judge():
         if self.is_kickoff == False: return None
 
         dist = math.hypot(
-            self.frame.ball.x - self.initial_ball_position[0], 
-            self.frame.ball.x - self.initial_ball_position[0]
+            self.frame.ball.x - self.init_pos.ball[0], 
+            self.frame.ball.y - self.init_pos.ball[1]
         )
 
         if (
@@ -303,23 +302,23 @@ class Judge():
             is_blue = i < self.n_robots_blue
             idx = i if is_blue else i - self.n_robots_blue
             color = "blue" if is_blue else "yellow"
-            pos = getattr(robot_pos, color)[idx+1] 
-            x, y, _ = pos if pos else [
+            pos = getattr(robot_pos, color)[idx] 
+            x, y, theta = pos if pos else [
                 random(-field_half_length + 0.1, field_half_length - 0.1), 
                 random(-field_half_width + 0.1, field_half_width - 0.1), 
                 random(0, 360)
             ]
-            
-            places = KDTree(positions)
-            while places.query([x, y], k=1)[0] < min_dist:
+            places = KDTree(positions) if positions else None
+            while places is None or places.query([x, y], k=1)[0] < min_dist:
                 x, y, theta = (
                     random(-field_half_length + 0.1, field_half_length - 0.1), 
                     random(-field_half_width + 0.1, field_half_width - 0.1), 
                     random(0, 360)
                 ) 
+                if not places: break
             positions.append([x, y])
             robot_list = getattr(frame, f"robots_{color}")
-            robot_list[idx+1] = Robot(x=x, y=y, theta=theta)
+            robot_list[idx] = Robot(x=x, y=y, theta=theta)
         
         return frame
 
@@ -348,9 +347,9 @@ class Judge():
             if ball_pos is None: raise ValueError("ball_pos must be provided for freekick")
             if team_freekick not in ["blue", "yellow"]: raise ValueError("team_freekick must be 'blue' or 'yellow'")
             pos = InitialPosition(ball=ball_pos)
-            pos_frame = self._get_frame(robot_pos=pos)
+            frame = self._get_frame(robot_pos=pos)
 
-            robots_list = getattr(pos_frame, f"robots_{team_freekick}")
+            robots_list = getattr(frame, f"robots_{team_freekick}")
             r = 0.2
             f = lambda x:  math.sqrt(r**2 - x**2)
             dx = random(0, r) if team_freekick == "yellow" else random(-r, 0)
@@ -361,7 +360,7 @@ class Judge():
                 theta= random(0, 360)
             )
 
-        return pos_frame
+        return frame
 
         
 

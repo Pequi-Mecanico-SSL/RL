@@ -3,6 +3,7 @@ from gymnasium.spaces import Box, Dict
 from gymnasium.wrappers.record_video import RecordVideo
 
 from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
+from rsoccer_gym.Entities import Robot as SimRobot
 from collections import namedtuple
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
@@ -94,7 +95,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             high=self.actions_bound["high"], 
             shape=(self.act_size, ), 
             dtype=np.float64) for i in range(self.n_robots_yellow)}
-        self.action_space =  Dict(**blue, **yellow)
+        self.action_space =  Dict({**blue, **yellow})
 
         blue = {f'blue_{i}': Box(
                     low=max(-self.field.length/2, -self.field.width/2), 
@@ -125,7 +126,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             robot_actions = actions[f'blue_{i}'].copy()
             angle = self.frame.robots_blue[i].theta
             v_x, v_y, v_theta = self.convert_actions(robot_actions, np.deg2rad(angle))
-            cmd = Robot(yellow=False, id=i, v_x=v_x, v_y=v_y, v_theta=v_theta, kick_v_x=self.kick_speed_x * max(robot_actions[3], 0))
+            cmd = SimRobot(yellow=False, id=i, v_x=v_x, v_y=v_y, v_theta=v_theta, kick_v_x=self.kick_speed_x * max(robot_actions[3], 0))
             commands.append(cmd)
         
         for i in range(self.n_robots_yellow):
@@ -133,7 +134,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             angle = self.frame.robots_yellow[i].theta
             v_x, v_y, v_theta = self.convert_actions(robot_actions, np.deg2rad(angle))
 
-            cmd = Robot(yellow=True, id=i, v_x=v_x, v_y=v_y, v_theta=v_theta, kick_v_x=self.kick_speed_x * max(robot_actions[3], 0))
+            cmd = SimRobot(yellow=True, id=i, v_x=v_x, v_y=v_y, v_theta=v_theta, kick_v_x=self.kick_speed_x * max(robot_actions[3], 0))
             commands.append(cmd)
 
         return commands
@@ -155,6 +156,60 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         v_x, v_y = v_x*c, v_y*c
         
         return v_x, v_y, v_theta
+
+    def convert_frame_to_sim_frame(self, frame: Frame) -> Frame:
+        # Convert frame from our format to the simulator format if needed
+        for i in range(self.n_robots_blue + self.n_robots_yellow):
+            is_blue = i < self.n_robots_blue
+            idx = i if is_blue else i - self.n_robots_blue
+            color = "blue" if is_blue else "yellow"
+            robot = getattr(frame, f"robots_{color}")[idx] 
+            getattr(frame, f"robots_{color}")[idx] = SimRobot(
+                yellow= not is_blue,
+                x=robot.x, 
+                y=robot.y, 
+                theta=robot.theta,
+                z=0,
+                v_x=0,
+                v_y=0,
+                v_theta=0,
+                kick_v_x=0,
+                kick_v_z=0,
+                dribbler=False,
+                infrared=False,
+                wheel_speed=False,
+                v_wheel0=0, # rad/s
+                v_wheel1=0, # rad/s
+                v_wheel2=0, # rad/s
+                v_wheel3=0 # rad/s
+            )
+        return frame
+    
+    def convert_sim_frame_to_frame(self, sim_frame) -> Frame:
+        # Convert frame from simulator format to our format if needed
+        robots_blue = {i: Robot(
+            x=sim_frame.robots_blue[i].x, 
+            y=sim_frame.robots_blue[i].y, 
+            theta=sim_frame.robots_blue[i].theta,
+            v_x=sim_frame.robots_blue[i].v_x,
+            v_y=sim_frame.robots_blue[i].v_y,
+            v_theta=sim_frame.robots_blue[i].v_theta
+        ) for i in range(self.n_robots_blue)}
+        robots_yellow = {i: Robot(
+            x=sim_frame.robots_yellow[i].x, 
+            y=sim_frame.robots_yellow[i].y, 
+            theta=sim_frame.robots_yellow[i].theta,
+            v_x=sim_frame.robots_yellow[i].v_x,
+            v_y=sim_frame.robots_yellow[i].v_y,
+            v_theta=sim_frame.robots_yellow[i].v_theta
+        ) for i in range(self.n_robots_yellow)}
+        ball = Ball(
+            x=sim_frame.ball.x, 
+            y=sim_frame.ball.y, 
+            v_x=sim_frame.ball.v_x, 
+            v_y=sim_frame.ball.v_y
+        )
+        return Frame(ball=ball, robots_blue=robots_blue, robots_yellow=robots_yellow)
 
 
     def _calculate_reward_done(self):
@@ -206,7 +261,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
 
         elif self.judge_status in ["LOWER_SIDELINE", "UPPER_SIDELINE"]:
             #reward_agents.update({last_touch: self.sparse_rewards.get("OUTSIDE_REWARD", 0) for i in range(self.n_robots_blue)})
-            reward_agents.update({f"blue_{i}Config": self.sparse_rewards.get("OUTSIDE_REWARD", 0) for i in range(self.n_robots_blue)})
+            reward_agents.update({f"blue_{i}": self.sparse_rewards.get("OUTSIDE_REWARD", 0) for i in range(self.n_robots_blue)})
             reward_agents.update({f"yellow_{i}": self.sparse_rewards.get("OUTSIDE_REWARD", 0) for i in range(self.n_robots_yellow)})
                 
             limit = self.field.length/2 - 0.2
@@ -217,8 +272,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
                 ball_pos=[ball.x + dx, ball.y + dy], 
                 team_freekick= "yellow" if "blue" in last_touch else "blue"
             )
-            self.rsim.reset(initial_pos_frame)
-            self.frame = self.rsim.get_frame()
+            self.rsim.reset(self.convert_frame_to_sim_frame(initial_pos_frame))
+            self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())
         
         elif self.judge_status in ["RIGHT_BOTTOM_LINE", "LEFT_BOTTOM_LINE"]:
             #reward_agents.update({last_touch: self.sparse_rewards.get("OUTSIDE_REWARD", 0) for i in range(self.n_robots_blue)})
@@ -230,8 +285,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
                 ball_pos=map_freekick[self.judge_status + "_" + last_touch.split("_")[0]],
                 team_freekick="yellow" if "blue" in last_touch else "blue"
             )
-            self.rsim.reset(initial_pos_frame)
-            self.frame = self.rsim.get_frame()
+            self.rsim.reset(self.convert_frame_to_sim_frame(initial_pos_frame))
+            self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())
 
         
         double_touch = False
@@ -252,8 +307,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         #         team_freekick="yellow" if "blue" in last_touch else "blue",
         #         use_init_pos=True
         #     )
-        #     self.rsim.reset(initial_pos_frame)
-        #     self.frame = self.rsim.get_frame()
+        #     self.rsim.reset(self.convert_frame_to_sim_frame(initial_pos_frame))
+        #     self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())
         return reward_agents, done, truncated
 
     def reset(self, seed=42, options={}):
@@ -265,17 +320,17 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
 
         self.judge_last_status, self.judge_last_info = dict(), dict()
         self.judge_status, self.judge_info = dict(), dict()
-        init_frame = self.judge._get_initial_positions_frame("kickoff")
         self.judge = self.class_judge(
             field=self.field, 
-            initial_frame=init_frame, 
+            init_pos = self.init_pos,
             possession_radius_scale=self.possession_radius_scale, 
             direction_change_threshold=self.direction_change_threshold
         )
-        self.rsim.reset(init_frame)
+        init_frame = self.judge._get_initial_positions_frame("kickoff")
+        self.rsim.reset(self.convert_frame_to_sim_frame(init_frame))
 
         # Get frame from simulator
-        self.frame = self.rsim.get_frame()
+        self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())
 
         blue = {f'blue_{i}': {} for i in range(self.n_robots_blue)}
         yellow = {f'yellow_{i}':{} for i in range(self.n_robots_yellow)}
@@ -341,22 +396,25 @@ if __name__ == "__main__":
     config = Config(
         init_pos=InitialPosition(
             blue={
-                0: [0, -1, 0],
-                1: [-0.5, -1, 0],
-                2: [0.5, -1, 0]
+                0: [ 1.5,  0.0,  0.0],
+                1: [-2.0,  1.0,  0.0],
+                2: [-2.0, -1.0,  0.0]
             },
             yellow={
-                0: [0, 1, 180],
-                
-                1: [-0.5, 1, 180],
-                2: [0.5, 1, 180]
+                0: [ 1.5,  0.0,  180.0],
+                1: [ 2.0,  1.0,  180.0],
+                2: [ 2.0, -1.0,  180.0]
             },
             ball=[0, 0]
         )
     )
-    env = SSLMultiAgentEnv(judge=Judge, **config.dict())
+    from src.rewards import DENSE_REWARDS, SPARSE_REWARDS
+    env = SSLMultiAgentEnv(judge=Judge, dense_rewards=DENSE_REWARDS, sparse_rewards=SPARSE_REWARDS, **config.model_dump())
     obs, info = env.reset()
     done = False
     while not done:
-        action = {agent: env.action_space.sample() for agent in env._agent_ids}
+        action = env.action_space.sample()
         obs, reward, done, truncated, info = env.step(action)
+        done = done.get("__all__", False) or truncated.get("__all__", False)
+        env.render()
+        print(reward)

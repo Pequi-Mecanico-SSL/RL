@@ -1,3 +1,4 @@
+rsoccer-gym @ git+https://github.com/Pequi-Mecanico-SSL/rSoccer.git@hotfix/gymnasium_version
 gym==0.21.0
 pyglet==1.5.27
 protobuf==4.25.0
@@ -10,4 +11,5 @@ ray[rllib]==2.10.0
 moviepy==1.0.3
 dill==0.3.9
 pyarrow==20.0.0
+pydantic==2.13.3
 debugpy
