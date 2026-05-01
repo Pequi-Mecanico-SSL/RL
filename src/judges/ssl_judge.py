@@ -352,12 +352,12 @@ class Judge():
             robots_list = getattr(frame, f"robots_{team_freekick}")
             r = 0.2
             f = lambda x:  math.sqrt(r**2 - x**2)
-            dx = random(0, r) if team_freekick == "yellow" else random(-r, 0)
+            dx = np.random.uniform(0, r) if team_freekick == "yellow" else np.random.uniform(-r, 0)
             dy = f(dx) if ball_pos[1] > 0 else -f(dx)
             robots_list[0] = Robot(
                 x= ball_pos[0] + dx, 
                 y= ball_pos[1] + dy, 
-                theta= random(0, 360)
+                theta= np.random.uniform(0, 360)
             )
 
         return frame
