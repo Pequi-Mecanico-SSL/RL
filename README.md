@@ -1,5 +1,12 @@
 Este repostório utiliza a biblioteca [rsoccer](https://github.com/robocin/rSoccer) para aplicar algortimos de Reinforcement Learning (RL) no ambinete Small Size League - EntryLevel (SSL). 
 
+## Guias relacionados
+
+- [GUIA_DEPLOY_GRSIM.md](GUIA_DEPLOY_GRSIM.md) — rodar uma policy treinada (checkpoint em `volumes/dgx_checkpoints/`) controlando o grSim via UDP/SSL-Vision. Cobre os modos X11, VNC e headless + viewer 2D.
+- [GUIA_EXECUCAO_GRSIM.md](GUIA_EXECUCAO_GRSIM.md) — pipeline Docker Compose original do grSim + policy.
+- [GUIA_VNC.md](GUIA_VNC.md) — acesso VNC ao container do grSim.
+- [AGENTS.md](AGENTS.md) — convenções internas do repo, layout, subagentes e instruções para colaboradores (humanos ou AI).
+
 # Informações do ambiente
 A implementação feita usa o conceito de self-play para que robôs aprendam a jogar, inspirado no trabalho [*Multiagent Reinforcement Learning for Strategic Decision Making and Control in Robotic Soccer Through Self-Play*](https://ieeexplore.ieee.org/document/9817118) no ambiente Very Small Size Soccer (VSSS).  O ambiente foi contruído pensando em um jogo 3x3.
 
