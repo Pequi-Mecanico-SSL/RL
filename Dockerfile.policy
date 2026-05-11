@@ -56,8 +56,20 @@ COPY config.yaml .
 # Criar diretorio para checkpoints (sera montado como volume)
 RUN mkdir -p /checkpoints
 
-# Copiar script principal de deploy
+# Copiar arquivos protobuf gerados (grSim)
+COPY grSim_Commands_pb2.py .
+COPY grSim_Packet_pb2.py .
+COPY grSim_Replacement_pb2.py .
+
+# Copiar arquivos protobuf do SSL-Vision
+COPY ssl_vision_wrapper_pb2.py .
+COPY ssl_vision_detection_pb2.py .
+COPY ssl_vision_geometry_pb2.py .
+COPY ssl_gc_common_pb2.py .
+
+# Copir script principal de deploy
 COPY deploy_policy.py .
+COPY deploy_policy_grsim.py .
 
 # Verificar instalacao
 RUN python -c "import torch; print(f'PyTorch: {torch.__version__}')" && \

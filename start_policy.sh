@@ -16,4 +16,5 @@ COMPOSE_FILE="docker-compose.grsim.yml"
 # shellcheck source=/dev/null
 source "$ROOT/scripts/sh/compose_exec.sh"
 
-exec compose_exec -f "$COMPOSE_FILE" up --build "$@"
+# `exec` nao funciona com funcoes shell; chamamos diretamente.
+compose_exec -f "$COMPOSE_FILE" up --build "$@"

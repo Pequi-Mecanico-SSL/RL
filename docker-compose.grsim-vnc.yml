@@ -69,6 +69,7 @@ services:
       - ./observations.py:/app/observations.py:ro
       - ./rewards.py:/app/rewards.py:ro
       - ./config.yaml:/app/config.yaml:ro
+      - ./deploy_policy_grsim.py:/app/deploy_policy_grsim.py:ro
       # Diretorio para logs (read-write)
       - ./logs:/app/logs
     environment:
@@ -81,7 +82,7 @@ services:
       # Porta de comandos do grSim
       - GRSIM_PORT=20011
       # Porta de vision do grSim
-      - VISION_PORT=10002
+      - VISION_PORT=10020
       # Endereco multicast de vision
       - VISION_ADDRESS=224.5.23.2
       # Frames por segundo (deve bater com o treinamento)
@@ -96,7 +97,7 @@ services:
       # Tipo de campo (0=6vs6, 1=11vs11, 2=hardware)
       - FIELD_TYPE=1
     working_dir: /app
-    command: python deploy_policy.py
+    command: python deploy_policy_grsim.py
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
       interval: 30s

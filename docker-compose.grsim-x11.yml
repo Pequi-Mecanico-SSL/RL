@@ -1,37 +1,40 @@
-# Docker Compose default para pipeline grSim + RL Policy (HEADLESS).
-# O grSim sobe imediatamente (sem precisar de cliente VNC); o policy comeca a
-# receber pacotes SSL-Vision na hora.
-# Para visualizar com GUI, use docker-compose.grsim-vnc.yml.
+# grSim com janela nativa via X11 do host + policy (blue) + policy (yellow).
 #
-# Override do checkpoint:
-#   CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/<exp>/<checkpoint_NNNNNN> ./start_policy.sh
+# Uso:
+#   xhost +local:docker
+#   docker compose -f docker-compose.grsim-x11.yml up -d --build
+#   # janela do grSim aparece no seu desktop
+#   docker compose -f docker-compose.grsim-x11.yml down
+#
+# Requer: servidor X11 no host (Linux), DISPLAY definido.
 
 services:
-  # Servico do simulador grSim (headless, sem GUI/VNC)
   grsim:
     image: robocupssl/grsim:latest
     container_name: grsim_simulator
-    # Sem `command`: entrypoint cai no modo headless e inicia /usr/local/bin/grSim na hora.
-    # Com network_mode: host, as publicacoes "ports:" sao ignoradas; grSim escuta no host.
     network_mode: host
-    healthcheck:
-      test: ["CMD", "pgrep", "grSim"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+    runtime: nvidia
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:ro
+    # Sem 'command: vnc' -> entrypoint usa headless por padrao.
+    # Aqui sobrescrevemos para rodar com janela X11.
+    entrypoint: ["/usr/local/bin/grSim"]
     restart: unless-stopped
 
-  # Servico de deploy da policy RL para time AZUL
   rl-policy:
     build:
       context: .
       dockerfile: Dockerfile.policy
+    image: rl-rl-policy:latest
     container_name: rl_policy_deploy
     depends_on:
-      grsim:
-        condition: service_started
-    # Usar host network para receber multicast do SSL-Vision
+      - grsim
     network_mode: host
     volumes:
       - ./volumes/dgx_checkpoints:/checkpoints:ro
@@ -42,7 +45,6 @@ services:
       - ./deploy_policy_grsim.py:/app/deploy_policy_grsim.py:ro
       - ./logs:/app/logs
     environment:
-      # Override no shell: CHECKPOINT_PATH=... ./start_policy.sh
       - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003}
       - TEAM=blue
       - GRSIM_HOST=127.0.0.1
@@ -59,18 +61,12 @@ services:
     command: python deploy_policy_grsim.py
     restart: on-failure:3
 
-  # Servico de deploy da policy RL para time AMARELO
   rl-policy-yellow:
-    build:
-      context: .
-      dockerfile: Dockerfile.policy
+    image: rl-rl-policy:latest
     container_name: rl_policy_deploy_yellow
     depends_on:
-      grsim:
-        condition: service_started
-      rl-policy:
-        condition: service_started
-    # Usar host network para receber multicast do SSL-Vision
+      - grsim
+      - rl-policy
     network_mode: host
     volumes:
       - ./volumes/dgx_checkpoints:/checkpoints:ro
@@ -81,7 +77,6 @@ services:
       - ./deploy_policy_grsim.py:/app/deploy_policy_grsim.py:ro
       - ./logs:/app/logs
     environment:
-      # Override no shell: CHECKPOINT_PATH=... ./start_policy.sh
       - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003}
       - TEAM=yellow
       - GRSIM_HOST=127.0.0.1
@@ -97,16 +92,3 @@ services:
     working_dir: /app
     command: python deploy_policy_grsim.py
     restart: on-failure:3
-
-  # Servico opcional para visualizacao de logs
-  log-viewer:
-    image: alpine:latest
-    container_name: grsim_log_viewer
-    volumes:
-      - ./logs:/logs:ro
-    command: tail -f /logs/policy.log
-    profiles:
-      - logs
-    depends_on:
-      - rl-policy
-    network_mode: host
