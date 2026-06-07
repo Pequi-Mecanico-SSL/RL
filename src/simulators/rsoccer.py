@@ -237,6 +237,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
 
         ball = self.frame.ball
         last_touch = self.judge_info["last_touch"]
+        touch_team = "blue" if not last_touch else last_touch.split("_")[0]
         map_freekick = {
             "RIGHT_BOTTOM_LINE_blue": [self.field.length/2 - 1, (self.field.width/2 - 0.2) * (1 if ball.y > 0 else -1)],
             "RIGHT_BOTTOM_LINE_yellow": [self.field.length/2 - 0.2, (self.field.width/2 - 0.2) * (1 if ball.y > 0 else -1)],
@@ -270,7 +271,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             initial_pos_frame: Frame = self.judge._get_initial_positions_frame(
                 "freekick", 
                 ball_pos=[ball.x + dx, ball.y + dy], 
-                team_freekick= "yellow" if "blue" in last_touch else "blue"
+                team_freekick="yellow" if touch_team == "blue" else "blue"
             )
             self.rsim.reset(self.convert_frame_to_sim_frame(initial_pos_frame))
             self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())
@@ -282,8 +283,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         
             initial_pos_frame: Frame = self.judge._get_initial_positions_frame(
                 "freekick", 
-                ball_pos=map_freekick[self.judge_status + "_" + last_touch.split("_")[0]],
-                team_freekick="yellow" if "blue" in last_touch else "blue"
+                ball_pos=map_freekick[self.judge_status + "_" + touch_team],
+                team_freekick="yellow" if touch_team == "blue" else "blue"
             )
             self.rsim.reset(self.convert_frame_to_sim_frame(initial_pos_frame))
             self.frame = self.convert_sim_frame_to_frame(self.rsim.get_frame())

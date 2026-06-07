@@ -18,13 +18,13 @@ from src.models.custom_torch_model import CustomFCNet
 from src.models.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
 from src.objects.Config import InitialPosition, Config
 from src.simulators.rsoccer import SSLMultiAgentEnv#, SSLMultiAgentEnv_record
-from src.utils.wrappers import StackWrapper
+from src.utils.wrappers import StackWrapper, MyRecordVideo
 from src.judges.ssl_judge import Judge
 
 from torch.utils.tensorboard import SummaryWriter
 
-from rewards import DENSE_REWARDS, SPARSE_REWARDS
-from observations import OBSERVATIONS
+from src.rewards import DENSE_REWARDS, SPARSE_REWARDS
+from src.observations import OBSERVATIONS
 import time
 
 # RAY_PDB=1 python RL_eval.py
@@ -35,14 +35,17 @@ def create_rllib_env_recorder(config):
     trigger = lambda t: t % 1 == 0
     config["render_mode"] = "rgb_array"
     stack_size = config.pop("stack_size")
+    video_prefix = f"rl-video-{os.getpid()}-{int(time.time() * 1000)}"
     ssl_el_env = StackWrapper(SSLMultiAgentEnv(**config), stack_size=stack_size, observation_funcs=OBSERVATIONS)
-
-    return SSLMultiAgentEnv_record(
-        ssl_el_env,
-        video_folder="/ws/videos", 
+    ssl_el_env.render_mode = "rgb_array"
+    ssl_el_env = MyRecordVideo(
+        ssl_el_env, 
+        video_folder="/ws/videos",
         episode_trigger=trigger, 
+        name_prefix=video_prefix,
         disable_logger=True
     )
+    return ssl_el_env
 
 def create_rllib_env(config):
     stack_size = config.pop("stack_size")
@@ -167,10 +170,11 @@ if __name__ == "__main__":
     counter = ScoreCounter.options(name="score_counter").remote(
         maxlen=file_configs["score_average_over"]
     )
-    env_config = Config(
-        init_pos = InitialPosition(**file_configs["env"]["init_pos"]),
-        **file_configs["env"]
-    ).model_dump()
+    # env_config = Config(
+    #     init_pos = InitialPosition(**file_configs["env"]["init_pos"]),
+    #     **file_configs["env"]
+    # ).model_dump()
+    env_config = file_configs["env"]
     env_config["judge"] = Judge
 
     tune.registry.register_env("Soccer", create_rllib_env)
@@ -205,6 +209,7 @@ if __name__ == "__main__":
 
     env_config["dense_rewards"] = DENSE_REWARDS
     env_config["sparse_rewards"] = SPARSE_REWARDS
+    configs["env_config"] = env_config
     if args.evaluation:
         eval_configs = file_configs["evaluation"].copy()
         env_config_eval = env_config.copy()

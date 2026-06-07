@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import os
 from src.objects import Frame, Ball, Robot, Field, InitialPosition
 from scipy.spatial import KDTree
 
@@ -24,6 +25,7 @@ class Judge():
         self.frame = self._get_initial_positions_frame("kickoff")
         self.historical_ball_positions = set()
         self.is_kickoff = kickoff
+        self.debug_initial_pos = os.getenv("JUDGE_DEBUG_INIT_POS", "0") == "1"
 
     def judge(self, frame) -> tuple[str, dict]:
         """
@@ -302,7 +304,18 @@ class Judge():
             is_blue = i < self.n_robots_blue
             idx = i if is_blue else i - self.n_robots_blue
             color = "blue" if is_blue else "yellow"
-            pos = getattr(robot_pos, color)[idx] 
+            color_positions = getattr(robot_pos, color, {}) or {}
+            # Config files use 1-based keys, but keep a fallback to 0-based.
+            pos = color_positions.get(idx + 1)
+            if pos is None:
+                pos = color_positions.get(idx)
+
+            if pos is None and self.debug_initial_pos:
+                print(
+                    f"[Judge] Missing initial pose for {color}_{idx}. "
+                    f"Available keys: {sorted(list(color_positions.keys()))}"
+                )
+
             x, y, theta = pos if pos else [
                 random(-field_half_length + 0.1, field_half_length - 0.1), 
                 random(-field_half_width + 0.1, field_half_width - 0.1), 

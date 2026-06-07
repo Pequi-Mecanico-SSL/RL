@@ -12,8 +12,8 @@ from src.simulators import SSLMultiAgentEnv
 from src.utils.wrappers import StackWrapper
 from src.judges.ssl_judge import Judge
 
-from rewards import DENSE_REWARDS, SPARSE_REWARDS
-from observations import OBSERVATIONS
+from src.rewards import DENSE_REWARDS, SPARSE_REWARDS
+from src.observations import OBSERVATIONS
 import time
 import debugpy
 

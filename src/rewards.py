@@ -327,8 +327,8 @@ DENSE_REWARDS = [
 ]
 
 SPARSE_REWARDS = {
-    "GOAL_REWARD": 10, # robot that scored gets this reward and the other team gets negative this reward
+    "GOAL_REWARD": 1000, # robot that scored gets this reward and the other team gets negative this reward
     "OUTSIDE_REWARD": -10, # the team of the last robot that touched the ball gets this reward
-    "OPPONENT_DEFENSE_AREA": -1,
-    "TEAM_DEFENSE_AREA": -1
+    "OPPONENT_DEFENSE_AREA": -1000,
+    "TEAM_DEFENSE_AREA": -1000
 }

@@ -1,8 +1,10 @@
 import numpy as np
+import os
 from gymnasium.spaces import Box, Dict
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 from gymnasium.wrappers.record_video import RecordVideo
+from gymnasium.wrappers.monitoring import video_recorder
 
 class StackWrapper(MultiAgentEnv):
     def __init__(self, base_env, stack_size, observation_funcs, *args, **kwargs):
@@ -102,7 +104,55 @@ class StackWrapper(MultiAgentEnv):
         return self.base_env.render(*args, **kwargs)
     
 
-class MyRecordVideo(RecordVideo):
+class MyRecordVideo(RecordVideo, MultiAgentEnv):
+    def reset(self, **kwargs):
+        """Reset env without forcing an immediate render/capture.
+
+        rsoccer may fail rendering right after reset; first frame is captured after
+        the first environment step instead.
+        """
+        observations = self.env.reset(**kwargs)
+        self.terminated = False
+        self.truncated = False
+
+        if not self.recording and self._video_enabled():
+            self.start_video_recorder()
+
+        return observations
+
+    def start_video_recorder(self):
+        """Start recorder without capturing a frame immediately."""
+        self.close_video_recorder()
+
+        video_name = f"{self.name_prefix}-step-{self.step_id}"
+        if self.episode_trigger:
+            video_name = f"{self.name_prefix}-episode-{self.episode_id}"
+
+        base_path = os.path.join(self.video_folder, video_name)
+        self.video_recorder = video_recorder.VideoRecorder(
+            env=self.env,
+            base_path=base_path,
+            metadata={"step_id": self.step_id, "episode_id": self.episode_id},
+            disable_logger=self.disable_logger,
+        )
+
+        self.recorded_frames = 0
+        self.recording = True
+
+    def close(self):
+        """Close recorder explicitly before environment teardown."""
+        self.close_video_recorder()
+        try:
+            self.env.close()
+        except Exception:
+            pass
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def step(self, action):
         """Steps through the environment using action, recording observations if :attr:`self.recording`."""
         (
