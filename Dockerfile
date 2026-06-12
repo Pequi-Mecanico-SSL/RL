@@ -24,7 +24,9 @@ RUN apt-get update && \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
+# Install a CUDA 12.x build of PyTorch to match modern NVIDIA drivers
+# This avoids CUDA init errors seen with cu118 on newer 55x drivers.
+RUN pip install torch==2.4.1+cu121 --index-url https://download.pytorch.org/whl/cu121
 
 # Copie o arquivo requirements.txt para o contêiner
 COPY requirements.txt .
