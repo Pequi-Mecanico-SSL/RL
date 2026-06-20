@@ -57,5 +57,8 @@ COPY src /ws/src
 
 # RUN mkdir /ws/volume
 
+# Ignore Ray RLlib deprecation warnings
+ENV PYTHONWARNINGS="ignore::DeprecationWarning"
+
 # Iniciar o contêiner com o bash
 CMD ["/bin/bash"]

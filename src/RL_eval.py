@@ -22,12 +22,13 @@ import debugpy
 
 ray.init()
 
-CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
-CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_516cb_00000_0_2026-06-06_18-12-45/checkpoint_000011"
+CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_516cb_00000_0_2026-06-06_18-12-45/checkpoint_000011"
 NUM_EPS = 100
 
 def create_rllib_env(config):
     stack_size = config.pop("stack_size", 8)
+    config["render_mode"] = "human"
     return StackWrapper(
         SSLMultiAgentEnv(**config),
         stack_size=stack_size,
@@ -83,15 +84,14 @@ configs["num_cpus"] = 1
 
 agents = PPOConfig.from_dict(configs).build()
 agents.restore(CHECKPOINT_PATH_BLUE)
-#breakpoint()
 
 with open(f"{CHECKPOINT_PATH_YELLOW}/policies/policy_blue/policy_state.pkl", "rb") as f:
     policy_state = pickle.load(f)
-#breakpoint()
+
 agents.set_weights({
     "policy_yellow": policy_state["weights"],
 })
-#breakpoint()
+
 
 configs["env_config"]["match_time"] = 40
 configs["env_config"]["dense_rewards"] = DENSE_REWARDS
