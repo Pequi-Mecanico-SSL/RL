@@ -25,7 +25,38 @@ import torch
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 
+import inspect
+import types
+
+try:
+    # Caminho normal: o pacote rSoccer resolve sem ciclo (ex.: commit de
+    # treino c684c2b, cujo __init__.py e vazio).
+    import rSoccer.rsoccer_gym.Entities  # noqa: F401
+except ImportError:
+    # v1.2.0: ssl_judge importa `rSoccer.rsoccer_gym.Entities`, mas
+    # `rSoccer/__init__.py` reimporta o env parcialmente inicializado.
+    # Stub com o pacote ja resolvido quebra o ciclo sem alterar o submodulo.
+    import rsoccer_gym.Entities as _entities
+
+    _stub = types.ModuleType("rSoccer")
+    _stub_gym = types.ModuleType("rSoccer.rsoccer_gym")
+    _stub.rsoccer_gym = _stub_gym
+    _stub_gym.Entities = _entities
+    sys.modules["rSoccer"] = _stub
+    sys.modules["rSoccer.rsoccer_gym"] = _stub_gym
+    sys.modules["rSoccer.rsoccer_gym.Entities"] = _entities
+
 from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+
+# O contrato do env difere por versao do rSoccer: o commit de treino do
+# baseline (c684c2b) calcula as 77 obs e o stack de 8 internamente
+# (stack_observation=8); o v1.2.0 exige judge + StackWrapper externo.
+ENV_PARAMS = set(inspect.signature(SSLMultiAgentEnv.__init__).parameters)
+LEGACY_ENV = "stack_observation" in ENV_PARAMS
+if not LEGACY_ENV:
+    from rsoccer_gym.judges.ssl_judge import Judge
+    from rsoccer_gym.Utils.Utils import StackWrapper
+    from observations import OBSERVATIONS
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
 
 sys.path.insert(0, "/app/scripts")
@@ -58,7 +89,7 @@ def load_env_config(experiment: str) -> dict:
     with open(os.path.join(experiment, "params.json"), encoding="utf-8") as stream:
         params = json.load(stream)
     config = params["env_config"]
-    return {
+    base = {
         "init_pos": {
             "blue": {int(key): value for key, value in config["init_pos"]["blue"].items()},
             "yellow": {int(key): value for key, value in config["init_pos"]["yellow"].items()},
@@ -67,14 +98,18 @@ def load_env_config(experiment: str) -> dict:
         "field_type": config["field_type"],
         "fps": config["fps"],
         "match_time": config["match_time"],
-        "stack_observation": 8,
         "render_mode": None,
         "dense_rewards": DENSE_REWARDS,
         "sparse_rewards": SPARSE_REWARDS,
     }
+    if LEGACY_ENV:
+        base["stack_observation"] = 8
+    else:
+        base["judge"] = Judge
+    return base
 
 
-def compute_actions(model, observations: dict, stochastic: bool) -> dict:
+def compute_actions(models: dict, observations: dict, stochastic: bool) -> dict:
     result = {}
     with torch.no_grad():
         for team in ("blue", "yellow"):
@@ -82,7 +117,7 @@ def compute_actions(model, observations: dict, stochastic: bool) -> dict:
             batch = torch.as_tensor(
                 np.stack([observations[name] for name in names]), dtype=torch.float32
             )
-            logits, _ = model(batch)
+            logits, _ = models[team](batch)
             signal = [-1, 1, -1, 1] if team == "yellow" else [1, 1, 1, 1]
             distribution = InferenceBetaDist(logits, signal=signal)
             values = distribution.sample() if stochastic else distribution.deterministic_sample()
@@ -94,11 +129,16 @@ def compute_actions(model, observations: dict, stochastic: bool) -> dict:
     return result
 
 
-def run_episode(model, env_config: dict, seed: int, stochastic: bool) -> dict:
+def run_episode(models: dict, env_config: dict, seed: int, stochastic: bool) -> dict:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    env = SSLMultiAgentEnv(**env_config)
+    if LEGACY_ENV:
+        env = SSLMultiAgentEnv(**env_config)
+    else:
+        env = StackWrapper(
+            SSLMultiAgentEnv(**env_config), stack_size=8, observation_funcs=OBSERVATIONS
+        )
     started = time.monotonic()
     try:
         observations, _ = env.reset(seed=seed)
@@ -107,7 +147,7 @@ def run_episode(model, env_config: dict, seed: int, stochastic: bool) -> dict:
         steps = 0
         info = {}
         while not done["__all__"] and not truncated["__all__"]:
-            actions = compute_actions(model, observations, stochastic)
+            actions = compute_actions(models, observations, stochastic)
             observations, rewards, done, truncated, info = env.step(actions)
             for name, reward in rewards.items():
                 returns[name] += float(reward)
@@ -153,6 +193,8 @@ def completed_keys(output: str) -> set:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint-glob", required=True)
+    parser.add_argument("--yellow-checkpoint", default=None,
+                        help="checkpoint fixo para a yellow (cross-play); default = espelho do blue")
     parser.add_argument("--episodes", type=int, default=30)
     parser.add_argument("--mode", choices=("deterministic", "stochastic", "both"), default="deterministic")
     parser.add_argument("--output", required=True)
@@ -165,19 +207,27 @@ def main() -> int:
     complete = completed_keys(args.output)
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
 
+    yellow_model = load_model(args.yellow_checkpoint) if args.yellow_checkpoint else None
+    yellow_name = (
+        str(Path(args.yellow_checkpoint).parent.name + "/" + Path(args.yellow_checkpoint).name)
+        if args.yellow_checkpoint else "mirror"
+    )
+
     with open(args.output, "a", encoding="utf-8", buffering=1) as output:
         for checkpoint in checkpoints:
             experiment = str(Path(checkpoint).parent)
             env_config = load_env_config(experiment)
             model = load_model(checkpoint)
+            models = {"blue": model, "yellow": yellow_model or model}
             checkpoint_name = str(Path(experiment).name + "/" + Path(checkpoint).name)
             for stochastic in modes:
                 mode = "stochastic" if stochastic else "deterministic"
                 for seed in range(args.episodes):
                     if (checkpoint_name, mode, seed) in complete:
                         continue
-                    row = run_episode(model, env_config, seed, stochastic)
+                    row = run_episode(models, env_config, seed, stochastic)
                     row["checkpoint"] = checkpoint_name
+                    row["yellow_checkpoint"] = yellow_name
                     row["field_type"] = env_config["field_type"]
                     output.write(json.dumps(row, sort_keys=True) + "\n")
                     print(
