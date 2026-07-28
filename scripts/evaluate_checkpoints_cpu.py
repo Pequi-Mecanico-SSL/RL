@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Avalia checkpoints no ambiente historico sem Ray, render ou GPU.
+
+O processo deve ser iniciado com CUDA_VISIBLE_DEVICES vazio. Cada episodio cria
+um ambiente novo para impedir vazamento de stack/last_actions entre episodios.
+Os resultados sao anexados em JSONL imediatamente apos cada episodio.
+"""
+
+import argparse
+import glob
+import json
+import os
+import pickle
+import random
+import sys
+import time
+from pathlib import Path
+
+if os.environ.get("CUDA_VISIBLE_DEVICES", None) != "":
+    raise RuntimeError("CUDA_VISIBLE_DEVICES deve estar vazio para esta avaliacao")
+
+import numpy as np
+import torch
+
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv
+from rewards import DENSE_REWARDS, SPARSE_REWARDS
+
+sys.path.insert(0, "/app/scripts")
+from model.action_dists_inferece import InferenceBetaDist
+from model.model_inferece import InferenceModel
+
+
+def load_model(checkpoint: str) -> InferenceModel:
+    model = InferenceModel(input_size=616, output_size=8)
+    policy_file = Path(checkpoint) / "policies/policy_blue/policy_state.pkl"
+    with policy_file.open("rb") as stream:
+        policy_state = pickle.load(stream)
+    mapped_weights = {}
+    for name, value in policy_state["weights"].items():
+        split = name.split(".")
+        if split[0] in ("_logits", "_value_branch"):
+            mapped = split[0] + "." + split[-1]
+        elif len(split) >= 3:
+            mapped = split[0] + "." + str(int(split[1]) * 2) + "." + split[-1]
+        else:
+            mapped = name
+        mapped_weights[mapped] = torch.as_tensor(value)
+    model.load_state_dict(mapped_weights, strict=True)
+    model.to("cpu")
+    model.eval()
+    return model
+
+
+def load_env_config(experiment: str) -> dict:
+    with open(os.path.join(experiment, "params.json"), encoding="utf-8") as stream:
+        params = json.load(stream)
+    config = params["env_config"]
+    return {
+        "init_pos": {
+            "blue": {int(key): value for key, value in config["init_pos"]["blue"].items()},
+            "yellow": {int(key): value for key, value in config["init_pos"]["yellow"].items()},
+            "ball": config["init_pos"]["ball"],
+        },
+        "field_type": config["field_type"],
+        "fps": config["fps"],
+        "match_time": config["match_time"],
+        "stack_observation": 8,
+        "render_mode": None,
+        "dense_rewards": DENSE_REWARDS,
+        "sparse_rewards": SPARSE_REWARDS,
+    }
+
+
+def compute_actions(model, observations: dict, stochastic: bool) -> dict:
+    result = {}
+    with torch.no_grad():
+        for team in ("blue", "yellow"):
+            names = [f"{team}_{robot_id}" for robot_id in range(3)]
+            batch = torch.as_tensor(
+                np.stack([observations[name] for name in names]), dtype=torch.float32
+            )
+            logits, _ = model(batch)
+            signal = [-1, 1, -1, 1] if team == "yellow" else [1, 1, 1, 1]
+            distribution = InferenceBetaDist(logits, signal=signal)
+            values = distribution.sample() if stochastic else distribution.deterministic_sample()
+            values = values.cpu().numpy()
+            if not np.isfinite(values).all():
+                raise ValueError("acao NaN/Inf")
+            for index, name in enumerate(names):
+                result[name] = np.clip(values[index], -1.0, 1.0)
+    return result
+
+
+def run_episode(model, env_config: dict, seed: int, stochastic: bool) -> dict:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    env = SSLMultiAgentEnv(**env_config)
+    started = time.monotonic()
+    try:
+        observations, _ = env.reset(seed=seed)
+        returns = {name: 0.0 for name in observations}
+        done = truncated = {"__all__": False}
+        steps = 0
+        info = {}
+        while not done["__all__"] and not truncated["__all__"]:
+            actions = compute_actions(model, observations, stochastic)
+            observations, rewards, done, truncated, info = env.step(actions)
+            for name, reward in rewards.items():
+                returns[name] += float(reward)
+            steps += 1
+        score = info.get("blue_0", {}).get("score", {"blue": 0, "yellow": 0})
+        if score["blue"] > score["yellow"]:
+            terminal = "blue_goal"
+        elif score["yellow"] > score["blue"]:
+            terminal = "yellow_goal"
+        else:
+            terminal = "timeout"
+        blue_return = float(np.mean([returns[f"blue_{i}"] for i in range(3)]))
+        yellow_return = float(np.mean([returns[f"yellow_{i}"] for i in range(3)]))
+        return {
+            "seed": seed,
+            "mode": "stochastic" if stochastic else "deterministic",
+            "steps": steps,
+            "sim_seconds": steps / env_config["fps"],
+            "wall_seconds": time.monotonic() - started,
+            "terminal": terminal,
+            "score_blue": int(score["blue"]),
+            "score_yellow": int(score["yellow"]),
+            "blue_return_mean": blue_return,
+            "yellow_return_mean": yellow_return,
+            "blue_return_per_step": blue_return / steps,
+            "yellow_return_per_step": yellow_return / steps,
+        }
+    finally:
+        env.close()
+
+
+def completed_keys(output: str) -> set:
+    keys = set()
+    if not os.path.exists(output):
+        return keys
+    with open(output, encoding="utf-8") as stream:
+        for line in stream:
+            row = json.loads(line)
+            keys.add((row["checkpoint"], row["mode"], row["seed"]))
+    return keys
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--checkpoint-glob", required=True)
+    parser.add_argument("--episodes", type=int, default=30)
+    parser.add_argument("--mode", choices=("deterministic", "stochastic", "both"), default="deterministic")
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+
+    checkpoints = sorted(glob.glob(args.checkpoint_glob))
+    if not checkpoints:
+        raise SystemExit("nenhum checkpoint encontrado")
+    modes = (False, True) if args.mode == "both" else (args.mode == "stochastic",)
+    complete = completed_keys(args.output)
+    os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+
+    with open(args.output, "a", encoding="utf-8", buffering=1) as output:
+        for checkpoint in checkpoints:
+            experiment = str(Path(checkpoint).parent)
+            env_config = load_env_config(experiment)
+            model = load_model(checkpoint)
+            checkpoint_name = str(Path(experiment).name + "/" + Path(checkpoint).name)
+            for stochastic in modes:
+                mode = "stochastic" if stochastic else "deterministic"
+                for seed in range(args.episodes):
+                    if (checkpoint_name, mode, seed) in complete:
+                        continue
+                    row = run_episode(model, env_config, seed, stochastic)
+                    row["checkpoint"] = checkpoint_name
+                    row["field_type"] = env_config["field_type"]
+                    output.write(json.dumps(row, sort_keys=True) + "\n")
+                    print(
+                        f"{checkpoint_name} {mode} seed={seed} "
+                        f"{row['terminal']} steps={row['steps']} "
+                        f"wall={row['wall_seconds']:.2f}s",
+                        flush=True,
+                    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
