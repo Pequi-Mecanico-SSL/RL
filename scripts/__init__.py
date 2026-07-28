@@ -1,4 +1,5 @@
-from scripts.model.custom_torch_model import CustomFCNet
-from scripts.model.model_inferece import InferenceModel
-from scripts.model.action_dists_inferece import InferenceBetaDist
-from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
+"""Utilitarios do projeto.
+
+Os entrypoints importam diretamente os componentes de treino ou inferencia que
+usam. Manter este modulo sem imports eager evita exigir Ray no deploy standalone.
+"""

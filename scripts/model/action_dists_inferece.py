@@ -1,10 +1,7 @@
-import numpy as np
 import torch
 from math import log
-import os
 
 from torch import Tensor as TensorType
-from torch import nn
 
 SMALL_NUMBER = 1e-06
 
@@ -22,22 +19,23 @@ class InferenceBetaDist():
         inputs: TensorType,
         low: float = -1.0,
         high: float = 1.0,
-        signal: list = [1, 1, 1, 1],
+        signal: list = None,
     ):
         # Stabilize input parameters (possibly coming from a linear layer).
         self.inputs = torch.clamp(inputs, log(SMALL_NUMBER), -log(SMALL_NUMBER))
-        self.inputs = torch.log(torch.exp(self.inputs) + 1.0) + 1.0
+        self.inputs = torch.nn.functional.softplus(self.inputs) + 1.0
         self.low = low
         self.high = high
         alpha, beta = torch.chunk(self.inputs, 2, dim=-1)
         # Note: concentration0==beta, concentration1=alpha (!)
         self.dist = torch.distributions.Beta(concentration1=alpha, concentration0=beta)
-        self.signal = torch.tensor(signal)
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.signal = torch.tensor(
+            signal or [1, 1, 1, 1], dtype=inputs.dtype, device=inputs.device
+        )
 
     def deterministic_sample(self) -> TensorType:
         self.last_sample = self._squash(self.dist.mean)
-        return self.signal.to(self.device) * self.last_sample
+        return self.signal * self.last_sample
 
     def sample(self) -> TensorType:
         # Use the reparameterization version of `dist.sample` to allow for
@@ -45,7 +43,7 @@ class InferenceBetaDist():
         normal_sample = self.dist.rsample()
         self.last_sample = self._squash(normal_sample)
 
-        return self.signal.to(self.device) * self.last_sample
+        return self.signal * self.last_sample
 
     def logp(self, x: TensorType) -> TensorType:
         unsquashed_values = self._unsquash(x)

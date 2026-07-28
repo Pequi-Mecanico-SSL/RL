@@ -3,7 +3,7 @@ from sim2real.utils import pos, angle_between_two, dist_between, inverted_robot
 from sim2real.config import FIELD_LENGTH, FIELD_WIDTH, N_ROBOTS_BLUE, N_ROBOTS_YELLOW, MAX_EP_LENGTH, GOAL, BALL, ROBOT
 import numpy as np
 
-def frame_to_observations(frame, last_actions, observations):
+def frame_to_observations(frame, last_actions, observations, steps=0):
 
     # print("=====================================OBSERVATION===================================================")
     f = lambda x: " ".join([f"{i:.2f}" for i in x])
@@ -22,7 +22,10 @@ def frame_to_observations(frame, last_actions, observations):
         goal_adv = GOAL(x=   0.2 + FIELD_LENGTH/2, y=0)
         goal_ally = GOAL(x= -0.2 - FIELD_LENGTH/2, y=0)
 
-        robot_obs = robot_observation(robot, allys, advs, robot_action, allys_actions, ball, goal_adv, goal_ally)
+        robot_obs = robot_observation(
+            robot, allys, advs, robot_action, allys_actions,
+            ball, goal_adv, goal_ally, steps=steps
+        )
         observations[f'blue_{i}'] = np.delete(observations[f'blue_{i}'], range(len(robot_obs)))
         observations[f'blue_{i}'] = np.concatenate([observations[f'blue_{i}'], robot_obs], axis=0, dtype=np.float64)
 
@@ -43,7 +46,10 @@ def frame_to_observations(frame, last_actions, observations):
         goal_adv = GOAL(x=  -(-0.2 - FIELD_LENGTH/2), y=0)
         goal_ally = GOAL(x= -( 0.2 + FIELD_LENGTH/2), y=0)
         
-        robot_obs = robot_observation(robot, allys, advs, robot_action, allys_actions, ball, goal_adv, goal_ally)
+        robot_obs = robot_observation(
+            robot, allys, advs, robot_action, allys_actions,
+            ball, goal_adv, goal_ally, steps=steps
+        )
 
         observations[f'yellow_{i}'] = np.delete(observations[f'yellow_{i}'], range(len(robot_obs)))
         observations[f'yellow_{i}'] = np.concatenate([observations[f'yellow_{i}'], robot_obs], axis=0, dtype=np.float64)
@@ -126,7 +132,10 @@ def robot_observation(robot, allys, adversaries, robot_action, allys_actions, ba
     orientations = np.concatenate(orientations)
     dists = np.concatenate(dists)
     angles = np.concatenate(angles)
-    time_left = [(MAX_EP_LENGTH - steps)/MAX_EP_LENGTH]
+    # Clamp defensivo: no treino time_left pertence a [0, 1]. Sem episodio
+    # fisico sincronizado, steps podia ultrapassar MAX_EP_LENGTH e produzir
+    # entrada fora da distribuicao.
+    time_left = [max((MAX_EP_LENGTH - steps) / MAX_EP_LENGTH, 0.0)]
 
     #print(f"len_pos: {len(positions)} \t len_ori: {len(orientations)} \t len_dist: {len(dists)} \t len_ang: {len(angles)} \t len_last_act: {len(last_actions)} \t len_time_left: {len(time_left)}")
     robot_obs = np.concatenate([positions, orientations, dists, angles, last_actions, time_left], dtype=np.float64)
