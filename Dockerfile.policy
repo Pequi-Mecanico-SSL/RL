@@ -45,7 +45,8 @@ RUN grep -v "^gym==0.21.0" requirements.txt > /tmp/requirements_modern.txt && \
 
 # Codigo do ambiente (necessario para unpickle do policy_state e imports de rewards/observations)
 COPY rSoccer/ ./rSoccer/
-RUN pip install --no-cache-dir pygame
+RUN test -f /app/rSoccer/setup.py && \
+    pip install --no-cache-dir /app/rSoccer
 
 # Copiar estrutura de scripts
 COPY scripts/ ./scripts/

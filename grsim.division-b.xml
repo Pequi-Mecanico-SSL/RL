@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VarXML>
+  <Var name="Geometry" type="list">
+    <Var name="Game" type="list">
+      <Var name="Division" type="stringenum">Division B</Var>
+    </Var>
+  </Var>
+</VarXML>

@@ -1,7 +1,4 @@
-# Docker Compose default para pipeline grSim + RL Policy (HEADLESS).
-# O grSim sobe imediatamente (sem precisar de cliente VNC); o policy comeca a
-# receber pacotes SSL-Vision na hora.
-# Para visualizar com GUI, use docker-compose.grsim-vnc.yml.
+# Docker Compose para pipeline grSim + RL Policy em modo headless.
 #
 # Override do checkpoint:
 #   CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/<exp>/<checkpoint_NNNNNN> ./start_policy.sh
@@ -11,9 +8,9 @@ services:
   grsim:
     image: robocupssl/grsim:latest
     container_name: grsim_simulator
-    # Sem `command`: entrypoint cai no modo headless e inicia /usr/local/bin/grSim na hora.
-    # Com network_mode: host, as publicacoes "ports:" sao ignoradas; grSim escuta no host.
     network_mode: host
+    volumes:
+      - ./grsim.division-b.xml:/home/default/.grsim.xml:ro
     healthcheck:
       test: ["CMD", "pgrep", "grSim"]
       interval: 10s
@@ -43,13 +40,20 @@ services:
       - ./logs:/app/logs
     environment:
       # Override no shell: CHECKPOINT_PATH=... ./start_policy.sh
-      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003}
+      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000002}
       - TEAM=blue
+      - ACTION_MODE=${ACTION_MODE:-sample}
+      - ACTION_SEED=${ACTION_SEED_BLUE:-150}
+      - EPISODE_RESET=${EPISODE_RESET:-1}
+      - KICKOFF_MASTER=1
+      - CUDA_VISIBLE_DEVICES=
       - GRSIM_HOST=127.0.0.1
       - GRSIM_PORT=20011
       - VISION_PORT=10020
       - VISION_ADDRESS=224.5.23.2
       - FPS=30
+      - MATCH_TIME=40
+      - VISION_STALE_TIMEOUT=0.25
       - DEVICE=cpu
       - LOG_LEVEL=INFO
       - N_ROBOTS_BLUE=3
@@ -57,6 +61,7 @@ services:
       - FIELD_TYPE=1
     working_dir: /app
     command: python deploy_policy_grsim.py
+    stop_grace_period: 5s
     restart: on-failure:3
 
   # Servico de deploy da policy RL para time AMARELO
@@ -82,13 +87,20 @@ services:
       - ./logs:/app/logs
     environment:
       # Override no shell: CHECKPOINT_PATH=... ./start_policy.sh
-      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003}
+      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000002}
       - TEAM=yellow
+      - ACTION_MODE=${ACTION_MODE:-sample}
+      - ACTION_SEED=${ACTION_SEED_YELLOW:-1150}
+      - EPISODE_RESET=${EPISODE_RESET:-1}
+      - KICKOFF_MASTER=0
+      - CUDA_VISIBLE_DEVICES=
       - GRSIM_HOST=127.0.0.1
       - GRSIM_PORT=20011
       - VISION_PORT=10020
       - VISION_ADDRESS=224.5.23.2
       - FPS=30
+      - MATCH_TIME=40
+      - VISION_STALE_TIMEOUT=0.25
       - DEVICE=cpu
       - LOG_LEVEL=INFO
       - N_ROBOTS_BLUE=3
@@ -96,6 +108,7 @@ services:
       - FIELD_TYPE=1
     working_dir: /app
     command: python deploy_policy_grsim.py
+    stop_grace_period: 5s
     restart: on-failure:3
 
   # Servico opcional para visualizacao de logs
