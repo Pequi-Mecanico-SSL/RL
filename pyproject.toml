@@ -7,6 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "Pequi_SSL-EL_RL"
 dynamic = ["version"]
 dependencies = [
+  "PyYAML==6.0.2",
   "gym==0.21.0",
   "pyglet==1.5.27",
   "protobuf==4.25.0",
@@ -22,5 +23,7 @@ dependencies = [
   "pyarrow==20.0.0",
   "scipy==1.17.0",
   "debugpy",
+  "gradio>=5.0.0",
+  "huggingface_hub>=1.0",
   "rsoccer-gym @ git+https://github.com/Pequi-Mecanico-SSL/rSim.git"
 ]
