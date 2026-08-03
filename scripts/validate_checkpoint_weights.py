@@ -3,10 +3,10 @@
 
 import argparse
 import json
-import pickle
 from pathlib import Path
 
 import numpy as np
+import ray.cloudpickle as cloudpickle
 
 
 EXPECTED_POLICIES = ("policy_blue", "policy_yellow")
@@ -27,7 +27,7 @@ def validate(checkpoint: Path) -> dict:
         if not state_path.is_file():
             raise FileNotFoundError(state_path)
         with state_path.open("rb") as stream:
-            state = pickle.load(stream)
+            state = cloudpickle.load(stream)
         weights = state.get("weights")
         if not isinstance(weights, dict) or not weights:
             raise ValueError(f"{policy_id}: weights ausentes")

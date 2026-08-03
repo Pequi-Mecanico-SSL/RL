@@ -17,7 +17,8 @@ Registro metodologico e cumulativo. Cada fase deve declarar hipotese, mudanca un
 - Modelo: MLP 300/200/100, value branch separada.
 - Baseline treinado: 8.782.560 passos, 228 iteracoes, 24.942 episodios (~5,5% de 160M).
 - Checkpoint disponivel mais recente: `checkpoint_000003`, associado a aproximadamente iteracao 200.
-- Host: 16 CPUs, 15 GiB RAM, RTX 3060 12 GiB, 83 GiB livres; nenhum processo CUDA de compute no inicio.
+- Host: 16 CPUs, 15 GiB RAM, RTX 3060 12 GiB; nenhum processo CUDA de compute no inicio.
+- Espaco livre: 83 GiB no inicio e 33 GiB apos os builds; verificar antes de cada rodada.
 
 ## Evidencia anterior
 
@@ -122,3 +123,51 @@ Correcao operacional, sem alterar treino/fisica:
 	de build.
 
 Novo build iniciado com log em `/tmp/rl-policy-training-build.log`.
+
+#### Gate de runtime apos build
+
+- Imagem: `sha256:53eec0c5ff3783d2c5440a2f6262eb1dd1d7472fa27df6f14e24499fa8ede059`.
+- CUDA passou: Torch 2.0.1+cu118 reconheceu RTX 3060.
+- Versoes: Ray 2.10.0, Gymnasium 1.3.0, rc-robosim 1.2,
+	rsoccer-gym 1.0.0.
+- Import do treino falhou antes de iniciar Ray: `pyarrow 25.0.0` removeu
+	`PyExtensionType`, ainda usado pelo Ray 2.10.0.
+- Decisao: fixar `pyarrow==20.0.0`, versao ja validada na imagem standalone,
+	e repetir o gate. Nenhum treino foi iniciado.
+- Espaco livre apos build: 35 GiB; monitorar antes de treinos prolongados.
+
+### 2026-08-03 - Fase B: restore e iteracao 201 concluidos
+
+- Imagem final: `rl-policy-training:c684c2b`, digest
+	`sha256:3a94c6cf43701204cc15c8834619b1d3d0deaef99a506857e21e16af2cc7e1c9`.
+- Runtime: Ray 2.10.0, Torch 2.0.1+cu118, CUDA ativa na RTX 3060 e
+	`pyarrow==20.0.0`.
+- Restore do ckpt3 executou a iteracao 201 ate 7.742.520 env steps, 36
+	episodios, sem NaN/Inf, traceback ou erro.
+- Metricas da iteracao: reward medio `-875,308`, comprimento medio `896,417`,
+	`score=0,13`, entropy media `-0,839` e 76,2 s de treino.
+- O RLlib 1.1 preservou `/root/ray_results` do estado restaurado. A persistencia
+	correta exige montar o diretorio host diretamente nesse caminho.
+- Checkpoint completo validado: cada policy possui 16 tensores e 531.709
+	parametros finitos. Blue tem L2 `60,9871`; yellow tem L2 `60,9397`.
+- O checkpoint completo inclui objetos cloudpickle/optimizer e nao e portatil
+	para o runtime CPU de inferencia. `scripts/export_inference_checkpoint.py`
+	gera um artefato separado apenas com pesos NumPy e metadados; o export iter201
+	foi carregado com sucesso no runtime `rl-grsim-rl-policy`.
+
+Gate esportivo de continuidade, mesmos 20 seeds da referencia, blue iter201
+contra yellow ckpt0:
+
+| Blue | Gols blue | Gols yellow | Timeouts | Steps medios |
+|---|---:|---:|---:|---:|
+| ckpt3 | 14 | 0 | 6 | nao registrado |
+| iter201 | 16 | 0 | 4 | 875,4 |
+
+Returns medios do iter201: blue `-59,29`, yellow `-258,70`.
+
+Decisao: B1 confirmada e nenhuma regressao imediata observada. A diferenca de
+dois episodios e pequena para declarar melhoria. A Fase C comecara por um braco
+controle de 25 iteracoes sem alterar hiperparametros, reward, observacao ou
+modelo. O objetivo e medir a tendencia natural da continuacao antes de testar
+um schedule de entropia. Interromper se houver NaN/Inf, erro, falta de espaco ou
+checkpoint invalido.
