@@ -99,14 +99,28 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")
+parser.add_argument("--config", default="config.yaml")
+parser.add_argument("--restore", default=None)
+parser.add_argument("--stop-timesteps", type=int, default=None)
+parser.add_argument("--local-dir", default="volume")
+parser.add_argument("--experiment-name", default="PPO_selfplay_rec")
 
 if __name__ == "__main__":
     args = parser.parse_args()
 
     ray.init()
 
-    with open("config.yaml") as f:
+    with open(args.config) as f:
         file_configs = yaml.safe_load(f)
+
+    local_dir = os.path.abspath(args.local_dir)
+    parent_directory = os.path.join(local_dir, args.experiment_name)
+    stop_timesteps = (
+        args.stop_timesteps
+        if args.stop_timesteps is not None
+        else int(file_configs["timesteps_total"])
+    )
+    restore_checkpoint = args.restore or file_configs["checkpoint_restore"]
     
     configs = {**file_configs["rllib"], **file_configs["PPO"]}
 
@@ -159,16 +173,16 @@ if __name__ == "__main__":
 
     analysis = tune.run(
         "PPO",
-        name="PPO_selfplay_rec",
+        name=args.experiment_name,
         config=configs,
         stop={
-            "timesteps_total": int(file_configs["timesteps_total"]),
+            "timesteps_total": stop_timesteps,
         },
         checkpoint_freq=int(file_configs["checkpoint_freq"]),
         checkpoint_at_end=True,
-        local_dir=os.path.abspath("volume"),
+        local_dir=local_dir,
         #resume=True,
-        restore=file_configs["checkpoint_restore"],
+        restore=restore_checkpoint,
     )
 
     best_trial = analysis.get_best_trial("episode_reward_mean", mode="max")
