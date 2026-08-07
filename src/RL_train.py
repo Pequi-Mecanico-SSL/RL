@@ -123,11 +123,66 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 
         episode.hist_data["score"] = []
 
+        episode.user_data["metric_steps"] = 0
+        episode.user_data["sum_min_robot_distance"] = 0.0
+        episode.user_data["sum_robots_near_ball_count"] = 0.0
+        episode.user_data["total_offenses"] = 0
+        episode.user_data["collision_count"] = 0
+        episode.user_data["team_defense_area_count"] = 0
+        episode.user_data["opponent_defense_area_count"] = 0
+        episode.user_data["double_touch_count"] = 0
+        episode.user_data["goal_blue_events"] = 0
+        episode.user_data["goal_yellow_events"] = 0
+
+    def on_episode_step(
+        self, *, worker, base_env, episode: Episode, env_index: int, **kwargs
+    ) -> None:
+        info_a = episode.last_info_for("blue_0")
+        if not info_a:
+            return
+
+        metrics_step = info_a.get("metrics_step")
+        if not metrics_step:
+            return
+
+        episode.user_data["metric_steps"] += int(metrics_step.get("step", 0))
+        episode.user_data["sum_min_robot_distance"] += float(metrics_step.get("min_robot_distance", 0.0))
+        episode.user_data["sum_robots_near_ball_count"] += float(metrics_step.get("robots_near_ball_count", 0.0))
+        episode.user_data["total_offenses"] += int(metrics_step.get("total_offenses", 0))
+        episode.user_data["collision_count"] += int(metrics_step.get("collision_count", 0))
+        episode.user_data["team_defense_area_count"] += int(metrics_step.get("team_defense_area_count", 0))
+        episode.user_data["opponent_defense_area_count"] += int(metrics_step.get("opponent_defense_area_count", 0))
+        episode.user_data["double_touch_count"] += int(metrics_step.get("double_touch_count", 0))
+        episode.user_data["goal_blue_events"] += int(metrics_step.get("goal_blue", 0))
+        episode.user_data["goal_yellow_events"] += int(metrics_step.get("goal_yellow", 0))
+
     def on_episode_end(
         self, *, worker, base_env, policies, episode: Episode, **kwargs
     ) -> None:
         info_a = episode.last_info_for("blue_0")
-        single_score = info_a["score"]["blue"] - info_a["score"]["yellow"]
+        if not info_a:
+            return
+
+        score_info = info_a.get("score", {"blue": 0, "yellow": 0})
+        single_score = score_info["blue"] - score_info["yellow"]
+
+        steps = max(1, int(episode.user_data.get("metric_steps", 0)))
+        scale_per_1k = 1000.0 / steps
+
+        episode.custom_metrics["game/goals_blue"] = float(score_info["blue"])
+        episode.custom_metrics["game/goals_yellow"] = float(score_info["yellow"])
+        episode.custom_metrics["game/score_diff"] = float(single_score)
+
+        episode.custom_metrics["foul/total_offenses_per_1k_steps"] = float(episode.user_data["total_offenses"] * scale_per_1k)
+        episode.custom_metrics["foul/collisions_per_1k_steps"] = float(episode.user_data["collision_count"] * scale_per_1k)
+        episode.custom_metrics["foul/team_defense_area_events_per_1k_steps"] = float(episode.user_data["team_defense_area_count"] * scale_per_1k)
+        episode.custom_metrics["foul/opponent_defense_area_events_per_1k_steps"] = float(episode.user_data["opponent_defense_area_count"] * scale_per_1k)
+        episode.custom_metrics["kickoff/double_touch_per_1k_steps"] = float(episode.user_data["double_touch_count"] * scale_per_1k)
+
+        episode.custom_metrics["spacing/mean_min_robot_distance"] = float(episode.user_data["sum_min_robot_distance"] / steps)
+        episode.custom_metrics["spacing/robots_near_ball_count"] = float(episode.user_data["sum_robots_near_ball_count"] / steps)
+        episode.custom_metrics["game/goal_events_blue"] = float(episode.user_data["goal_blue_events"])
+        episode.custom_metrics["game/goal_events_yellow"] = float(episode.user_data["goal_yellow_events"])
 
         score_counter = ray.get_actor("score_counter")
         score_counter.append.remote(single_score)

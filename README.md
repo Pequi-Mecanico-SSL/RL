@@ -125,5 +125,18 @@ Por exemplo, o CHECKPOINT_PATH para o exemplo acima ficaria:
 
 Com tudo configurado, agora rode o `RL_eval.py`
     python render_episode.py
-    
+
+## 3. Interface Gradio
+
+Se quiser usar a interface web, rode:
+
+    python RL_GUI.py
+
+A interface tem duas abas:
+
+* **Train**: permite editar o conteúdo de `config.yaml`, iniciar o treinamento e visualizar o vídeo mais recente gravado durante a avaliação do treino.
+* **Evaluate**: permite escolher um checkpoint de experimentos passados e renderizar o episódio com `rgb_array` direto na janela do Gradio.
+
+O caminho dos checkpoints continua sendo o volume `volumes/dgx_checkpoints`, então você pode apontar a aba de avaliação para qualquer experimento salvo ali.
+
 Caso não esteja reconhecendo a gpu, tente instalar o [nvidia container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-with-apt) ou mudar a versão do cuda no dockerfile

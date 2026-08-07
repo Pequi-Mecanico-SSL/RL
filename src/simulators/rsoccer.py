@@ -211,6 +211,66 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         )
         return Frame(ball=ball, robots_blue=robots_blue, robots_yellow=robots_yellow)
 
+    def _get_offense_counts(self):
+        counts = {
+            "total_offenses": 0,
+            "collision_count": 0,
+            "team_defense_area_count": 0,
+            "opponent_defense_area_count": 0,
+            "double_touch_count": 0,
+        }
+
+        for offenses in self.judge_info.get("offenses", {}).values():
+            for offense in offenses:
+                counts["total_offenses"] += 1
+                if offense == "COLLISION":
+                    counts["collision_count"] += 1
+                elif offense == "TEAM_DEFENSE_AREA":
+                    counts["team_defense_area_count"] += 1
+                elif offense == "OPPONENT_DEFENSE_AREA":
+                    counts["opponent_defense_area_count"] += 1
+                elif offense == "DOUBLE_TOUCH":
+                    counts["double_touch_count"] += 1
+
+        return counts
+
+    def _get_min_robot_distance(self):
+        robots = [*self.frame.robots_blue.values(), *self.frame.robots_yellow.values()]
+        if len(robots) < 2:
+            return 0.0
+
+        min_dist = float("inf")
+        for i in range(len(robots)):
+            for j in range(i + 1, len(robots)):
+                dx = robots[i].x - robots[j].x
+                dy = robots[i].y - robots[j].y
+                dist = float(np.hypot(dx, dy))
+                if dist < min_dist:
+                    min_dist = dist
+
+        return 0.0 if min_dist == float("inf") else min_dist
+
+    def _count_robots_near_ball(self, radius=0.35):
+        ball = self.frame.ball
+        count = 0
+        for robot in [*self.frame.robots_blue.values(), *self.frame.robots_yellow.values()]:
+            dist = float(np.hypot(robot.x - ball.x, robot.y - ball.y))
+            if dist <= radius:
+                count += 1
+        return count
+
+    def _build_step_metrics(self):
+        offense_counts = self._get_offense_counts()
+        return {
+            "step": 1,
+            "goal_blue": int(self.judge_status == "RIGHT_GOAL"),
+            "goal_yellow": int(self.judge_status == "LEFT_GOAL"),
+            "is_kickoff": int(getattr(self.judge, "is_kickoff", False)),
+            "min_robot_distance": self._get_min_robot_distance(),
+            "robots_near_ball_count": self._count_robots_near_ball(),
+            **offense_counts,
+        }
+
 
     def _calculate_reward_done(self):
         self.judge_last_status = self.judge_status
@@ -376,7 +436,10 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         infos = {
             **{f'blue_{i}': {} for i in range(self.n_robots_blue)},
             **{f'yellow_{i}': {} for i in range(self.n_robots_yellow)}
-        }  
+        }
+
+        if "blue_0" in infos:
+            infos["blue_0"]["metrics_step"] = self._build_step_metrics()
 
         if done.get("__all__", False) or truncated.get("__all__", False):
             for i in range(self.n_robots_blue):
