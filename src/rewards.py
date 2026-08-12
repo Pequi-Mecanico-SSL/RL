@@ -268,31 +268,58 @@ def r_pass_or_intercept(field: Field, frame: Frame, last_frame: Frame, **kwargs)
     return reward
 
 def r_collision(field: Field, frame: Frame, last_frame: Frame, **kwargs):
+    # Reward-only shaping for collision/clustering:
+    # penalize close robot-robot distance smoothly and overcrowding near the ball.
+    if isinstance(frame, dict):
+        left_robots = [
+            frame[k] for k in sorted(frame.keys())
+            if k.startswith(f"{kwargs['left']}_")
+        ]
+        right_robots = [
+            frame[k] for k in sorted(frame.keys())
+            if k.startswith(f"{kwargs['right']}_")
+        ]
+        ball = frame["ball"]
+    else:
+        left_robots = list(frame.robots_blue.values())
+        right_robots = list(frame.robots_yellow.values())
+        if kwargs["right"] == "blue":
+            left_robots, right_robots = right_robots, left_robots
+        ball = frame.ball
 
-    robots_left = frame.robots_blue
-    robots_right = frame.robots_yellow
-    n_left = len(robots_left)
-    n_right = len(robots_right)
-    if kwargs["right"] == "blue":
-        robots_left, robots_right = robots_right, robots_left
+    robots = left_robots + right_robots
+    n_left = len(left_robots)
+    n_right = len(right_robots)
+    n_total = len(robots)
 
-    robots = [[r.x, r.y] for r in robots_left.values()]
-    robots.extend([[r.x, r.y] for r in robots_right.values()])
-    robots = np.array(robots)
+    if n_total <= 1:
+        return {
+            **{f"{kwargs['left']}_{idx}": 0.0 for idx in range(n_left)},
+            **{f"{kwargs['right']}_{idx}": 0.0 for idx in range(n_right)},
+        }
 
-    dot = robots @ robots.T
-    norm_2 = dot.diagonal()
-    dist_mat = np.sqrt(norm_2[None, :] + norm_2[:, None] - 2*dot) # broadcasting
-    dist_mat += 10**3*np.eye(len(robots))
-    dist_mat[:n_left, n_left:] = 10**3
-    dist_mat[n_left:, :n_left] = 10**3
-    
-    threshold = 0.5
-    collisions = (np.min(dist_mat, axis=1) < threshold).astype(np.int8)
-    
+    coords = np.array([[robot["x"], robot["y"]] for robot in robots], dtype=np.float64)
+    deltas = coords[:, None, :] - coords[None, :, :]
+    dist_mat = np.linalg.norm(deltas, axis=2)
+    np.fill_diagonal(dist_mat, np.inf)
+
+    min_dist = np.min(dist_mat, axis=1)
+
+    safe_dist = 0.40
+    # Smooth quadratic penalty as robots get closer than safe_dist.
+    proximity_penalty = -np.square(np.maximum(0.0, safe_dist - min_dist)) / (safe_dist ** 2)
+
+    ball_pos = np.array([ball["x"], ball["y"]], dtype=np.float64)
+    ball_dist = np.linalg.norm(coords - ball_pos[None, :], axis=1)
+    near_ball_radius = 0.35
+    near_ball_count = int(np.sum(ball_dist <= near_ball_radius))
+    cluster_penalty = -0.15 * max(0, near_ball_count - 2)
+
+    penalties = proximity_penalty + cluster_penalty
+
     reward = {
-        **{f"{kwargs['left']}_{idx}":  -collisions[idx] for idx in range(n_left)},
-        **{f"{kwargs['right']}_{idx - n_left}": -collisions[idx] for idx in range(n_left, n_left + n_right)}
+        **{f"{kwargs['left']}_{idx}": float(penalties[idx]) for idx in range(n_left)},
+        **{f"{kwargs['right']}_{idx}": float(penalties[n_left + idx]) for idx in range(n_right)},
     }
 
     return reward
@@ -318,10 +345,11 @@ def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
-    (0.7, r_speed, ["kick_speed_x", "fps"]),
+    (0.6, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
-    (0.1, r_off,   []),
-    (0.1, r_def,   []),
+    (0.05, r_off,   []),
+    (0.05, r_def,   []),
+    (0.2, r_collision, []),
     #(0.3, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
     #(0.6, r_wheel,   []),
 ]
