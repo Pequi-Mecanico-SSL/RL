@@ -684,3 +684,21 @@ a memoria deve voltar abaixo do limiar em < 4,0 s sem OOM/worker morto.
 
 Tentativa 3 lancada (preflight 10,86/10,86 GB, 0 CUDA apps, disco 37,2 GB),
 watchdog emendado em scripts/watchdog_host_memory.sh.
+
+### 2026-08-15 14:11 — Run B tentativa 3 CONCLUIDA; emenda do watchdog validada
+
+TERMINATED (EXIT=0) em 81 min: 17 iteracoes 219..235, todas com delta exato
+38.520 (primeiro delta vs iter218 tambem 38.520), episodios > 0, 1 worker,
+0 restarts, ts final 9.052.200. Checkpoint iter235 (checkpoint_000003)
+validado e persistido em experiment_results/h1_iter235_checkpoint_validation.json:
+counters exatos (env 9.052.200, agent 54.313.200 = 6x), blue l2 62,8677
+(progrediu de 61,9916), yellow l2 60,9397 inalterada, optimizer 32 tensores.
+
+Teste discriminante da emenda do watchdog: VALIDADO. 27 transientes acima de
+6,5 GiB no run inteiro, todos com duracao de 1-2 amostras (< 4 s, um por
+fronteira de iteracao), zero aborts, zero OOM. O gate sustentado de 4 s
+discrimina corretamente transiente de leak.
+
+Avaliacao final H1 em andamento (container h1_eval, CPU-only): iter235 blue
+deterministic vs ckpt3 e ckpt0 (yellow sample), 80 seeds fixos 0..79.
+Baselines iter210: 35W/1L/44T vs ckpt3; 46W/0L/34T vs ckpt0.
