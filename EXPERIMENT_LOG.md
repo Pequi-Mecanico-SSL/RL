@@ -811,3 +811,39 @@ abaixo ADOTADAS antes do lancamento:
 - Gates operacionais inalterados: preflight de recursos (2 medicoes),
   watchdog canonico ativo, fail-fast interno, validacao estrutural e por
   hash do checkpoint final antes da avaliacao.
+
+### 2026-08-15 16:29 — Run C abortado pelo watchdog (pressao de host); retomada C2
+
+Run C: 18 iteracoes 236..253 LIMPAS (delta exato 38.520, episodios>0, 1
+worker, 0 restarts; gate de restore iter236 PASSOU). Watchdog matou o
+container as 16:29:45 por MemAvailable=2,36 GB < 2,5 GB — pressao dominada
+por workload alheio do desktop (VS Code + Firefox ~3,8 GB), com contribuicao
+do transiente do treino no segundo final (classificacao do verificador:
+pressao MISTA; watchdog agiu conforme desenho; container em 5,35 GiB < 6,5).
+Nenhum workload alheio foi interrompido.
+
+Estado validado: checkpoint_000002 = iter250 persistido ANTES do abort
+(experiment_results/h1ext_iter250_checkpoint_validation.json: env 9.630.000,
+agent 57.780.000 = 6x, blue l2 63,5139 progrediu de 62,8677, yellow 60,9397
+INALTERADA, optimizer 32 tensores). Iteracoes 251..253: DESCARTADAS (sem
+checkpoint; nao usadas em nenhuma decisao).
+
+policy-verifier (retomada): APROVADO COM RESSALVAS. Emenda aceita como
+confirmatoria CONDICIONADA: trajetoria segmentada iter235→250 (run C) +
+250→260 (run C2), endpoint iter260 e 80 seeds INALTERADOS; sem avaliacao de
+checkpoints intermediarios. Ressalvas adotadas:
+- ScoreCounter do sync e recriado vazio no restore (estado dinamico nao
+  persistido — igual ao precedente run A→B); se houver sync da yellow em
+  251..260 (comparar hash vs 0c63a15c e log "Updating Opponent"), o
+  resultado deixa de ser confirmatorio do desenho original sem novo parecer.
+- Manifesto C2 persistido ANTES do lancamento:
+  experiment_results/h1ext_runC2_preflight_manifest.txt (restore iter250
+  blue d05a1b0c/yellow 0c63a15c, hashes de config/reward/watchdog/launcher).
+- Relancador automatico scripts/relaunch_runC2_when_free.sh: preflight
+  completo em loop (9,5e9 bytes 2x/20s, 0 CUDA apps, VRAM>=10.240, disco
+  >=30 GB), restore com glob de cardinalidade 1 + verificacao SHA-256,
+  watchdog canonico com kill garantido no exit.
+- Gate de restore C2: primeiro resultado deve ter iteration=251,
+  ts=9.668.520, agent 58.011.120, delta 38.520.
+- RNG de coleta nao fixada: 251..260 do C2 e outra realizacao estocastica
+  (variancia, nao vies — descartadas nao influenciaram decisao).
