@@ -171,3 +171,132 @@ controle de 25 iteracoes sem alterar hiperparametros, reward, observacao ou
 modelo. O objetivo e medir a tendencia natural da continuacao antes de testar
 um schedule de entropia. Interromper se houver NaN/Inf, erro, falta de espaco ou
 checkpoint invalido.
+
+### 2026-08-03 - Fase C: primeira tentativa do controle interrompida
+
+- Alvo: iter201 ate iter226, 8.705.520 env steps, sem mudanca de configuracao.
+- A tentativa usou limite Docker de 13 GiB e falhou antes da primeira iteracao:
+	o actor PPO morreu por `SIGKILL`/fim de conexao apos 83 s.
+- O Ray indicou OOM como causa provavel. Nao houve OOM global no journal do
+	kernel, NaN/Inf, resultado ou checkpoint; `result.json` ficou vazio.
+- O host possui 15 GiB e nenhum swap. Apos a falha havia 7,5 GiB disponiveis e
+	nenhum outro container/GPU workload relevante.
+
+Decisao: nenhum resultado de treino foi aceito. A hipotese operacional e que o
+limite cgroup de 13 GiB matou o actor, nao que a policy divergiu. Antes de repetir
+o controle, executar somente uma iteracao sem `--memory`. Se ela falhar, reduzir
+workers/envs em configuracao operacional separada; se passar, retomar o controle
+sem limite cgroup e manter os mesmos hiperparametros PPO.
+
+#### Smoke de recuperacao
+
+- Repeticao sem `--memory` concluiu a iteracao 202 em 76,4 s e 7.781.040 env
+	steps, com 35 episodios, reward medio `-916,565` e comprimento medio `922`.
+- Gate estrito do log: sem NaN/Inf, `Traceback` ou nivel `ERROR`.
+- Checkpoint completo valido: 16 tensores e 531.709 parametros finitos por
+	policy; L2 blue `61,0170` e yellow `60,9397`.
+
+Decisao: a hipotese de OOM pelo limite cgroup foi confirmada pelo teste
+discriminante. O checkpoint iter202 nao sera usado no controle. A rodada de 25
+iteracoes sera reiniciada do iter201, sem limite Docker de memoria, mantendo a
+mesma origem e os mesmos hiperparametros planejados.
+
+#### Segunda tentativa: OOM do Ray confirmado
+
+- Sem limite cgroup, a rodada concluiu somente as iteracoes 202..206 e falhou
+	antes da 207. Nao houve checkpoint porque a frequencia historica era 50.
+- O raylet registrou explicitamente workers mortos por pressao de memoria: um
+	worker no primeiro evento e sete no evento acumulado seguinte.
+- Apos perder workers, a coleta terminou com batch GAE inconsistente:
+	`rewards (41,)` contra `vpred (40,)`. Esse erro e consequencia da degradacao,
+	nao evidencia de divergencia da policy.
+- As cinco iteracoes validas chegaram a 7.999.320 env steps, `score=0,19`, sem
+	atualizacao da yellow. Esses pesos nao foram salvos e nao serao usados.
+
+Decisao: reduzir somente o paralelismo de coleta em
+`config.control-lowmem.yaml`: 3 workers em vez de 6, mantendo 2 envs por worker,
+batch PPO de 38.520 e todos os hiperparametros de aprendizado. Checkpoints passam
+a cada 5 iteracoes para limitar perda operacional. Executar primeiro 3 iteracoes
+desde iter201; somente sem morte de worker, NaN/Inf ou erro retomar ate iter226.
+
+#### Smoke low-memory aprovado
+
+- Iteracoes 202..204 concluidas em 354,8 s, ate 7.858.080 env steps.
+- Gate do log: nenhum OOM, worker morto, NaN/Inf, `Traceback` ou nivel `ERROR`.
+- Checkpoint iter204 valido: 16 tensores e 531.709 parametros finitos por policy;
+	L2 blue `61,1225` e yellow `60,9397`.
+- A comparacao estrutural com `config.yaml` confirmou somente tres diferencas:
+	`num_workers 6 -> 3`, `num_cpus 7 -> 4` e `checkpoint_freq 50 -> 5`.
+
+Decisao: continuar a mesma trajetoria valida do iter204 ate iter226. Esse smoke
+faz parte do braco controle porque partiu do iter201 e nao alterou nenhum
+hiperparametro PPO, reward, observacao ou modelo.
+
+#### Continuacao low-memory reprovada e artefatos em quarentena
+
+O `policy-verifier` auditou `config.control-lowmem.yaml`, o log, `progress.csv`
+e os contadores internos dos checkpoints. Veredito independente: **REPROVADO**.
+
+Evidencias:
+
+- Iteracoes 205..210 avancaram exatamente 38.520 env steps cada, de 7.896.600
+	ate 8.089.200, com 36..41 episodios por iteracao.
+- O primeiro evento invalido ocorreu depois da iter210: dois actors morreram as
+	18:50:30 e o raylet confirmou seis workers mortos por pressao de memoria as
+	18:50:52.
+- A iter211 avancou somente 12.840 env steps, um terco do batch planejado, e
+	registrou zero episodios. Varias iteracoes seguintes mantiveram zero episodios
+	e steps congelados apesar de o numero de iteracao continuar aumentando.
+- O processo encerrou sem container ativo. O ultimo registro persistido chegou
+	a iter247 e 8.217.600 env steps, abaixo do alvo de 8.705.520.
+- `checkpoint_000001` corresponde a iter210: 8.089.200 env steps treinados e
+	amostrados. A validacao encontrou 16 tensores e 531.709 parametros finitos por
+	policy; L2 blue `61,4541` e yellow `60,9397`.
+- O host permaneceu sem swap. Ao fim havia 6,4 GiB de memoria disponivel e 33
+	GiB livres em disco; imagens e cache Docker ocupam espaco relevante, mas nao
+	foram removidos automaticamente para preservar outros workloads.
+
+Decisao: iter210 e o ultimo checkpoint elegivel para restore. Todos os resultados
+da iter211 em diante e `checkpoint_000002`..`checkpoint_000008` ficam em
+quarentena: nao avaliar, exportar ou promover. Antes de nova rodada, implementar
+um watchdog que encerre no primeiro worker morto/OOM, batch diferente de 38.520,
+zero episodios ou steps congelados; submeter config e comando ao
+`policy-verifier` em preflight.
+
+#### Watchdog implementado; smoke 2-worker bloqueado por recursos
+
+- `RL_train.py` agora desabilita recriacao de workers e retries do Tune, valida
+	batch, iteracao, counters cumulativos, episodios, workers/restarts e finitude
+	dos pesos antes de atualizar a yellow ou permitir checkpoint.
+- Cinco testes no runtime fixo passaram: iter210 aceita; iter211, chave ausente,
+	counters resetados e peso NaN rejeitados.
+- O validador completo do iter210 foi persistido em
+	`experiment_results/iter210_checkpoint_validation.json`: iteracao 210, env
+	steps 8.089.200, agent steps 48.535.200 e optimizer blue finito.
+- Novo braco operacional preparado em `config.control-2w.yaml`. A comparacao
+	estrutural com a config 3-worker mostrou apenas `num_cpus 4 -> 3` e
+	`num_workers 3 -> 2`; PPO, reward, observacao e modelo permanecem iguais.
+- O `policy-verifier` aprovou os gates com ressalvas, mas reprovou a execucao
+	atual: outro workload consumia 2,663 GiB RAM, 3.388 MiB VRAM, 105% CPU e 58%
+	de GPU. Havia somente 6,93 GiB de RAM disponivel e nenhum swap.
+
+Decisao: nao iniciar nem parar o workload alheio. O smoke permanece bloqueado
+ate duas medicoes independentes confirmarem RAM disponivel >= 10 GiB, GPU livre
+>= 10.240 MiB, utilizacao GPU <= 10%, nenhum processo CUDA concorrente e disco
+livre >= 30 GiB. Quando liberado, restaurar somente iter210, usar stop exato
+8.127.720 e aceitar exclusivamente a iter211 com 38.520 env steps novos, 2
+workers saudaveis, zero restarts/faulty episodes e episodios positivos.
+
+#### Tentativa de execucao bloqueada no preflight
+
+- Medicao em 2026-08-03T17:31:51-03:00: 9.555.988.480 bytes de RAM disponivel,
+	nenhum swap, GPU com 11.496 MiB livres e 40% de utilizacao, sem processo CUDA
+	listado, e 35.210.395.648 bytes livres em disco.
+- Containers concorrentes: somente `jurisprudencia-postgres`, com 22,56 MiB de
+	RAM e 0% CPU.
+- RAM disponivel ficou abaixo de 10 GiB e utilizacao da GPU acima de 10%; os
+	demais gates passaram.
+
+Decisao: preflight **REPROVADO**. O smoke nao foi iniciado e nenhum workload foi
+interrompido. Repetir as duas medicoes quando RAM e GPU estiverem naturalmente
+dentro dos limites.

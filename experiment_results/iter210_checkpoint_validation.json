@@ -1,0 +1,28 @@
+{
+  "checkpoint": "training_runs/control_lowmem_to226_ray_results/control_lowmem_to226/PPO_Soccer_286cf_00000_0_2026-08-03_18-35-53/checkpoint_000001",
+  "counters": {
+    "num_agent_steps_sampled": 48535200,
+    "num_agent_steps_trained": 48535200,
+    "num_env_steps_sampled": 8089200,
+    "num_env_steps_trained": 8089200
+  },
+  "policies": {
+    "policy_blue": {
+      "l2_norm": 61.454108987062256,
+      "max_abs": 1.7229931354522705,
+      "optimizer_parameters": 1063418,
+      "optimizer_tensors": 32,
+      "parameters": 531709,
+      "tensors": 16
+    },
+    "policy_yellow": {
+      "l2_norm": 60.939719496801644,
+      "max_abs": 1.6630303859710693,
+      "optimizer_parameters": 0,
+      "optimizer_tensors": 0,
+      "parameters": 531709,
+      "tensors": 16
+    }
+  },
+  "training_iteration": 210
+}
