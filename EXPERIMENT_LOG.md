@@ -953,3 +953,21 @@ Debate idea-debater: APOIO COM MUDANCAS — todas adotadas:
 - Run D1 lancado 19:12 (container h3_probeD1, FREEZE_OPPONENT=1, restore
   cirurgico, stop 9.244.800 = iter240, watchdog concorrente com CID ativo
   antes da iter236).
+
+### 2026-08-15 19:37 — Probe D1 concluido (EXIT=0); gates operacionais PASSARAM
+
+- 5 iteracoes 236..240 exatas (delta 38.520, episodios>0, 1 worker, 0
+  restarts), ts final 9.244.800; watchdog sem aborts; ZERO "Updating
+  Opponent" e ZERO "Sync suprimido" (score interno nunca passou de 0,6).
+- Score interno vs espelho subiu monotonicamente: 0,02 → 0,09 → 0,15 →
+  0,22 → 0,23 (telemetria; nao e metrica de decisao).
+- Checkpoint D240 validado (h3sync_D240_checkpoint_validation.json):
+  iter240, env 9.244.800, agent 55.468.800 = 6x, blue l2 63,0270
+  (progrediu de 62,8677), yellow l2 62,8677, optimizer 32 tensores.
+- Yellow CONGELADA comprovada por conteudo: pesos da yellow do D240 ==
+  blue iter235 bit-exato, 16/16 tensores
+  (h3sync_D240_yellow_frozen_check.txt). Nota: o hash do pkl difere do
+  manifesto (80f46b90 vs 173be554) por re-serializacao do RLlib ao salvar;
+  o gate substantivo e a igualdade bit-exata dos pesos, que PASSOU.
+- Avaliacoes diagnosticas em andamento (seeds 80..119, JSONL separado por
+  confronto): D240/C240 vs ckpt3 e ckpt0, iter235 vs ckpt3.
