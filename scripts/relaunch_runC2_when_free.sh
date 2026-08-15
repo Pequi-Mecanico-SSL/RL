@@ -12,6 +12,8 @@ if [ "${#CANDS[@]}" -ne 1 ]; then
   echo "$(date -Is) ERRO: esperado exatamente 1 restore, achados ${#CANDS[@]}" >> "$LOG"; exit 1
 fi
 RESTORE="${CANDS[0]}"
+# Caminho equivalente dentro do container (workdir /campaign)
+RESTORE_IN_CONTAINER="/campaign/${RESTORE#"$PWD"/}"
 EXPECTED=$(awk '/policy_blue\/policy_state.pkl/{print $1}' experiment_results/h1ext_runC2_preflight_manifest.txt)
 ACTUAL=$(sha256sum "$RESTORE/policies/policy_blue/policy_state.pkl" | awk '{print $1}')
 if [ "$EXPECTED" != "$ACTUAL" ]; then
@@ -41,7 +43,7 @@ while true; do
         -v /home/marcos/Documentos/RL-policy-improvement/rSoccer:/campaign/rSoccer:ro \
         -e PYTHONPATH=/campaign:/campaign/rSoccer rl-policy-training:c684c2b \
         python RL_train.py --config config.control-1w.yaml \
-        --restore "$RESTORE" \
+        --restore "$RESTORE_IN_CONTAINER" \
         --stop-timesteps 10015200 --experiment-name h1_runC2_iter260 \
         > training_runs/h1_runC2/train.log 2>&1
       RC=$?
