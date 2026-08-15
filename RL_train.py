@@ -40,6 +40,72 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         pol_id = "policy_yellow"
     return pol_id
 
+
+def validate_train_result(result, expected_batch_size, expected_workers):
+    expected_values = {
+        "num_env_steps_sampled_this_iter": expected_batch_size,
+        "num_env_steps_trained_this_iter": expected_batch_size,
+        "num_healthy_workers": expected_workers,
+        "num_remote_worker_restarts": 0,
+        "num_faulty_episodes": 0,
+    }
+    errors = []
+    for key, expected in expected_values.items():
+        if key not in result:
+            errors.append(f"{key} ausente")
+        elif result[key] != expected:
+            errors.append(f"{key}={result[key]!r}, esperado {expected!r}")
+
+    episodes = result.get("episodes_this_iter")
+    if episodes is None:
+        errors.append("episodes_this_iter ausente")
+    elif episodes <= 0:
+        errors.append(f"episodes_this_iter={episodes!r}, esperado > 0")
+
+    iteration = result.get("training_iteration")
+    if not isinstance(iteration, int) or iteration < 1:
+        errors.append(f"training_iteration invalida: {iteration!r}")
+    else:
+        expected_env_steps = iteration * expected_batch_size
+        expected_agent_steps = expected_env_steps * 6
+        cumulative_values = {
+            "num_env_steps_sampled": expected_env_steps,
+            "num_env_steps_trained": expected_env_steps,
+            "num_agent_steps_sampled": expected_agent_steps,
+            "num_agent_steps_trained": expected_agent_steps,
+        }
+        for key, expected in cumulative_values.items():
+            if key not in result:
+                errors.append(f"{key} ausente")
+            elif result[key] != expected:
+                errors.append(f"{key}={result[key]!r}, esperado {expected!r}")
+
+    if errors:
+        iteration = result.get("training_iteration", "desconhecida")
+        raise RuntimeError(
+            f"resultado de treino invalido na iteracao {iteration}: "
+            + "; ".join(errors)
+        )
+
+
+def validate_policy_weights(weights):
+    expected_policies = {"policy_blue", "policy_yellow"}
+    if set(weights) != expected_policies:
+        raise RuntimeError(
+            f"policies invalidas nos pesos: {sorted(weights)}, "
+            f"esperado {sorted(expected_policies)}"
+        )
+
+    for policy_id, policy_weights in weights.items():
+        if not policy_weights:
+            raise RuntimeError(f"{policy_id}: pesos ausentes")
+        non_finite = sum(
+            int((~np.isfinite(np.asarray(value))).sum())
+            for value in policy_weights.values()
+        )
+        if non_finite:
+            raise RuntimeError(f"{policy_id}: {non_finite} pesos NaN/Inf")
+
 @ray.remote
 class ScoreCounter:
     def __init__(self, maxlen):
@@ -81,6 +147,16 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
         """
         Update multiagent oponent weights when score is high enough
         """
+        algorithm = info["algorithm"]
+        validate_train_result(
+            info["result"],
+            expected_batch_size=algorithm.config["train_batch_size"],
+            expected_workers=algorithm.config["num_workers"],
+        )
+        validate_policy_weights(
+            algorithm.get_weights(["policy_blue", "policy_yellow"])
+        )
+
         score_counter = ray.get_actor("score_counter")
         current_score = ray.get(score_counter.get_score.remote())
 
@@ -88,7 +164,6 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 
         if current_score > 0.6:
             print("---- Updating Opponent!!! ----")
-            algorithm = info["algorithm"]
             algorithm.set_weights(
                 {
                     "policy_yellow": algorithm.get_weights(["policy_blue"])["policy_blue"],
@@ -123,6 +198,8 @@ if __name__ == "__main__":
     restore_checkpoint = args.restore or file_configs["checkpoint_restore"]
     
     configs = {**file_configs["rllib"], **file_configs["PPO"]}
+    configs["recreate_failed_workers"] = False
+    configs["max_num_worker_restarts"] = 0
 
     counter = ScoreCounter.options(name="score_counter").remote(
         maxlen=file_configs["score_average_over"]
@@ -181,6 +258,8 @@ if __name__ == "__main__":
         checkpoint_freq=int(file_configs["checkpoint_freq"]),
         checkpoint_at_end=True,
         local_dir=local_dir,
+        max_failures=0,
+        fail_fast=True,
         #resume=True,
         restore=restore_checkpoint,
     )
