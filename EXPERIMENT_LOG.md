@@ -399,3 +399,34 @@ nao rodar treinos inteiros — apenas o necessario para validar cada ideia.
   somente apos H1/H3 esgotarem.
 
 ## Diario da campanha 2
+
+### 2026-08-15 — Debate do backlog (idea-debater, GPT-5.6 Sol)
+
+Fatos novos levantados pelo debatedor (auditáveis no baseline):
+- entropia Beta caiu de -0,31 (iter1) para -1,04 (iter228) com entropy_coeff
+  0.01 — a policy JA se concentra; premissa de H3 enfraquecida.
+- custo real ~166-174 s/iteracao (6 workers); 25 iteracoes ~1-2 GPU-h.
+- score do self-play estava 0,99 na iter228: o callback pode estar copiando
+  blue para yellow quase toda iteracao (self-play com defasagem ~1 iteracao).
+
+Vereditos:
+- H0 smoke iter211: APOIO COM MUDANCAS — aprova pipeline, nao estabilidade;
+  H1 ganha gate operacional extra apos 3 iteracoes.
+- H1 continuacao 25 iter: APOIO COM MUDANCAS — avaliacao primaria pre-definida
+  so na iter235; primaria = taxa de vitoria vs ckpt3 (ckpt0 = gate de nao
+  regressao; espelho = diagnostico); 20 eps para triagem, 80 eps pareados se
+  promissor; aceite = IC95% da diferenca pareada > 0.
+- H2 mean vs sample offline: APOIO COM MUDANCAS — so mean vs sample (sem
+  temperatura), yellow fixa em sample, 80 seeds iguais vs ckpt3; empate
+  mantem mean. Nao rodar simultaneo a treino (compete por CPU/RAM).
+- H3 entropy 0.003 fixo: APOIO COM MUDANCAS — somente apos H1; sem schedule.
+- H4 lr: CONTRA no momento (sem instabilidade demonstrada; reabrir com
+  regressao em 2 checkpoints + losses/grad_gnorm).
+- H5 reward: CONTRA nesta campanha — antes, decomposicao offline por
+  componente vs gols futuros.
+- NOVA Hsync-audit (custo ~zero): auditar frequencia real de sync da yellow
+  no baseline antes de considerar opponent pool.
+
+Sequencia adotada: H0 → auditorias CPU (sync, baseline iter210 cross-play,
+decomposicao reward) → H2 offline → H1 (25 iter) → [H3 se H1 nao resolver
+conversao] → gate curto grSim do vencedor. Orcamento reservado: ate 7 GPU-h.
