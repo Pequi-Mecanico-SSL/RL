@@ -3,10 +3,10 @@ config_rllib_example.json
 teste.ipynb
 rsoccer_gym.egg-info/
 build/
-teste.ipynb
 venv/
 *.ipynb
 volumes/*
+training_runs/
 
 # Logs do deploy/treino
 logs/

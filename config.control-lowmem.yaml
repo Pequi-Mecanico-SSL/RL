@@ -1,0 +1,55 @@
+score_average_over: 100
+timesteps_total: 160000000
+checkpoint_freq: 5
+checkpoint_restore: null
+rllib:
+  num_cpus: 4
+  num_gpus: 1
+  num_workers: 3
+  num_envs_per_worker: 2
+  framework: "torch"
+  disable_env_checking: true
+PPO:
+  batch_mode: "truncate_episodes"
+  rollout_fragment_length: "auto"
+  train_batch_size: 38520
+  sgd_minibatch_size: 12840
+  gamma: 0.99
+  lambda: 0.95
+  entropy_coeff: 0.01
+  kl_coeff: 0.0
+  lr: 0.0004
+  vf_loss_coeff: 0.5
+  grad_clip: 0.5
+  num_sgd_iter: 5
+  clip_param: 0.2
+  vf_clip_param: 100000.0
+  normalize_actions: false
+
+evaluation:
+  evaluation_interval: 1
+  evaluation_num_workers: 0
+  evaluation_duration: 1
+  evaluation_duration_unit: "episodes"
+  evaluation_config:
+    env: "Soccer_recorder"
+    num_envs_per_worker: 1
+
+custom_model:
+  fcnet_hiddens: [300, 200, 100]
+  vf_share_layers: false
+env:
+  init_pos:
+    blue:
+      1: [-1.5, 0.0, 0.0]
+      2: [-2.0, 1.0, 0.0]
+      3: [-2.0, -1.0, 0.0]
+    yellow:
+      1: [1.5, 0.0, 180.0]
+      2: [2.0, 1.0, 180.0]
+      3: [2.0, -1.0, 180.0]
+    ball: [0, 0]
+  field_type: 1
+  fps: 30
+  match_time: 40
+  render_mode: "human"

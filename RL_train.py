@@ -4,9 +4,6 @@ import yaml
 from collections import deque
 import numpy as np
 from typing import Dict
-import pickle
-import re
-from datetime import datetime
 
 import ray
 from ray import air, tune
@@ -16,80 +13,98 @@ from ray.rllib.evaluation.episode import Episode
 
 from scripts.model.custom_torch_model import CustomFCNet
 from scripts.model.action_dists import TorchBetaTest_blue, TorchBetaTest_yellow
-from rSoccer.rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
-from rSoccer.rsoccer_gym.Utils.Utils import StackWrapper
-from rSoccer.rsoccer_gym.judges.ssl_judge import Judge
+from rsoccer_gym.ssl.ssl_multi_agent.ssl_multi_agent import SSLMultiAgentEnv, SSLMultiAgentEnv_record
 
 from torch.utils.tensorboard import SummaryWriter
+import os
 
 from rewards import DENSE_REWARDS, SPARSE_REWARDS
-from observations import OBSERVATIONS
 import time
 
-# RAY_PDB=1 python RL_eval.py
+# RAY_PDB=1 python rllib_multiagent.py
 # ray debug
-parent_directory = "/root/ray_results/PPO_selfplay_rec"
 
 def create_rllib_env_recorder(config):
     trigger = lambda t: t % 1 == 0
     config["render_mode"] = "rgb_array"
-    stack_size = config.pop("stack_size")
-    ssl_el_env = StackWrapper(SSLMultiAgentEnv(**config), stack_size=stack_size, observation_funcs=OBSERVATIONS)
-
-    return SSLMultiAgentEnv_record(
-        ssl_el_env,
-        video_folder="/ws/videos", 
-        episode_trigger=trigger, 
-        disable_logger=True
-    )
+    ssl_el_env = SSLMultiAgentEnv(**config)
+    return SSLMultiAgentEnv_record(ssl_el_env, video_folder="/ws/videos", episode_trigger=trigger, disable_logger=True)
 
 def create_rllib_env(config):
-    stack_size = config.pop("stack_size")
-    return StackWrapper(
-        SSLMultiAgentEnv(**config),
-        stack_size=stack_size,
-        observation_funcs=OBSERVATIONS
-    )
+    return SSLMultiAgentEnv(**config)
 
 def policy_mapping_fn(agent_id, episode, worker, **kwargs):
-    pol_id = ""
     if "blue" in agent_id:
         pol_id = "policy_blue"
     elif "yellow" in agent_id:
         pol_id = "policy_yellow"
     return pol_id
 
-def find_latest_experiment(parent_dir):
-    # Define the regex pattern for the directory name
-    pattern = r"PPO_Soccer_\w+_\d+_\d+_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}"
-    experiments_dirs = [d for d in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, d))]
-    matching_exp = [d for d in experiments_dirs if re.match(pattern, d)]
-    matching_exp.sort(key=lambda x: datetime.strptime("_".join(x.split('_')[-2:]), "%Y-%m-%d_%H-%M-%S"), reverse=True)
-    latest_exp = matching_exp[0] if len(matching_exp) > 0 else None
 
-    if latest_exp is None:
-        return None
-    
-    # Define the regex pattern for the checkpoint directory name
-    checkpoint_pattern = r"checkpoint_\d{6}"
-    checkpoint_dirs = [d for d in os.listdir(os.path.join(parent_dir, latest_exp)) if os.path.isdir(os.path.join(parent_dir, latest_exp, d))]
-    matching_checkpoints = [d for d in checkpoint_dirs if re.match(checkpoint_pattern, d)]
-    matching_checkpoints.sort(key=lambda x: int(x.split('_')[-1]), reverse=True)
-    latest_checkpoint = matching_checkpoints[0] if len(matching_checkpoints) > 0 else None
+def validate_train_result(result, expected_batch_size, expected_workers):
+    expected_values = {
+        "num_env_steps_sampled_this_iter": expected_batch_size,
+        "num_env_steps_trained_this_iter": expected_batch_size,
+        "num_healthy_workers": expected_workers,
+        "num_remote_worker_restarts": 0,
+        "num_faulty_episodes": 0,
+    }
+    errors = []
+    for key, expected in expected_values.items():
+        if key not in result:
+            errors.append(f"{key} ausente")
+        elif result[key] != expected:
+            errors.append(f"{key}={result[key]!r}, esperado {expected!r}")
 
-    if latest_checkpoint is None:
-        return None
+    episodes = result.get("episodes_this_iter")
+    if episodes is None:
+        errors.append("episodes_this_iter ausente")
+    elif episodes <= 0:
+        errors.append(f"episodes_this_iter={episodes!r}, esperado > 0")
 
-    full_checkpoint_path = os.path.join(parent_dir, latest_exp, latest_checkpoint)
-    return full_checkpoint_path
-    
-def save_checkpoint_weights(checkpoint_path):
-    with open(f"{checkpoint_path}/policies/policy_blue/policy_state.pkl", "rb") as f:
-        policy_state = pickle.load(f)
+    iteration = result.get("training_iteration")
+    if not isinstance(iteration, int) or iteration < 1:
+        errors.append(f"training_iteration invalida: {iteration!r}")
+    else:
+        expected_env_steps = iteration * expected_batch_size
+        expected_agent_steps = expected_env_steps * 6
+        cumulative_values = {
+            "num_env_steps_sampled": expected_env_steps,
+            "num_env_steps_trained": expected_env_steps,
+            "num_agent_steps_sampled": expected_agent_steps,
+            "num_agent_steps_trained": expected_agent_steps,
+        }
+        for key, expected in cumulative_values.items():
+            if key not in result:
+                errors.append(f"{key} ausente")
+            elif result[key] != expected:
+                errors.append(f"{key}={result[key]!r}, esperado {expected!r}")
 
-    # save checkpoint weights
-    with open(f"{checkpoint_path}/policies/policy_blue/policy_weights.pkl", "wb") as f:
-        pickle.dump(policy_state, f)
+    if errors:
+        iteration = result.get("training_iteration", "desconhecida")
+        raise RuntimeError(
+            f"resultado de treino invalido na iteracao {iteration}: "
+            + "; ".join(errors)
+        )
+
+
+def validate_policy_weights(weights):
+    expected_policies = {"policy_blue", "policy_yellow"}
+    if set(weights) != expected_policies:
+        raise RuntimeError(
+            f"policies invalidas nos pesos: {sorted(weights)}, "
+            f"esperado {sorted(expected_policies)}"
+        )
+
+    for policy_id, policy_weights in weights.items():
+        if not policy_weights:
+            raise RuntimeError(f"{policy_id}: pesos ausentes")
+        non_finite = sum(
+            int((~np.isfinite(np.asarray(value))).sum())
+            for value in policy_weights.values()
+        )
+        if non_finite:
+            raise RuntimeError(f"{policy_id}: {non_finite} pesos NaN/Inf")
 
 @ray.remote
 class ScoreCounter:
@@ -132,6 +147,16 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
         """
         Update multiagent oponent weights when score is high enough
         """
+        algorithm = info["algorithm"]
+        validate_train_result(
+            info["result"],
+            expected_batch_size=algorithm.config["train_batch_size"],
+            expected_workers=algorithm.config["num_workers"],
+        )
+        validate_policy_weights(
+            algorithm.get_weights(["policy_blue", "policy_yellow"])
+        )
+
         score_counter = ray.get_actor("score_counter")
         current_score = ray.get(score_counter.get_score.remote())
 
@@ -139,39 +164,51 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
 
         if current_score > 0.6:
             print("---- Updating Opponent!!! ----")
-            algorithm = info["algorithm"]
             algorithm.set_weights(
                 {
                     "policy_yellow": algorithm.get_weights(["policy_blue"])["policy_blue"],
                 }
             )
             score_counter = ray.get_actor("score_counter")
-            print(f"score_couter before reset {current_score}")
             score_counter.reset.remote()
-            print(f"score_couter after reset {ray.get(score_counter.get_score.remote())}")
 
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")
+parser.add_argument("--config", default="config.yaml")
+parser.add_argument("--restore", default=None)
+parser.add_argument("--stop-timesteps", type=int, default=None)
+parser.add_argument("--local-dir", default="volume")
+parser.add_argument("--experiment-name", default="PPO_selfplay_rec")
 
 if __name__ == "__main__":
     args = parser.parse_args()
 
     ray.init()
 
-    with open("config.yaml") as f:
+    with open(args.config) as f:
         file_configs = yaml.safe_load(f)
+
+    local_dir = os.path.abspath(args.local_dir)
+    parent_directory = os.path.join(local_dir, args.experiment_name)
+    stop_timesteps = (
+        args.stop_timesteps
+        if args.stop_timesteps is not None
+        else int(file_configs["timesteps_total"])
+    )
+    restore_checkpoint = args.restore or file_configs["checkpoint_restore"]
     
     configs = {**file_configs["rllib"], **file_configs["PPO"]}
+    configs["recreate_failed_workers"] = False
+    configs["max_num_worker_restarts"] = 0
 
     counter = ScoreCounter.options(name="score_counter").remote(
         maxlen=file_configs["score_average_over"]
     )
     configs["env_config"] = file_configs["env"]
-    configs["env_config"]["judge"] = Judge
 
     tune.registry.register_env("Soccer", create_rllib_env)
     tune.registry.register_env("Soccer_recorder", create_rllib_env_recorder)
-    temp_env = create_rllib_env(configs["env_config"].copy())
+    temp_env = create_rllib_env(configs["env_config"])
     obs_space = temp_env.observation_space["blue_0"]
     act_space = temp_env.action_space["blue_0"]
     temp_env.close()
@@ -211,36 +248,21 @@ if __name__ == "__main__":
         configs["evaluation_config"] = eval_configs["evaluation_config"].copy()
         configs["evaluation_config"]["env_config"] = env_config_eval
 
-    try:
-        analysis = tune.run(
-            "PPO",
-            name="PPO_selfplay_rec",
-            config=configs,
-            stop={
-                "timesteps_total": int(file_configs["timesteps_total"]),
-            },
-            checkpoint_freq=int(file_configs["checkpoint_freq"]),
-            checkpoint_at_end=True,
-            local_dir=os.path.abspath("volume"),
-            #resume=True,
-            restore=file_configs["checkpoint_restore"],
-        )
-    except Exception as e:
-        latest_experiment = find_latest_experiment(parent_directory)
-        if latest_experiment is None:
-            print("No valid experiment found")
-        else:
-            save_checkpoint_weights(latest_experiment)
-            print(f"Checkpoint weights saved from {latest_experiment}")
-        raise e
-    finally:
-        latest_experiment = find_latest_experiment(parent_directory)
-        if latest_experiment is None:
-            print("No valid experiment found")
-        else:
-            save_checkpoint_weights(latest_experiment)
-            print(f"Checkpoint weights saved from {latest_experiment}")
-            
+    analysis = tune.run(
+        "PPO",
+        name=args.experiment_name,
+        config=configs,
+        stop={
+            "timesteps_total": stop_timesteps,
+        },
+        checkpoint_freq=int(file_configs["checkpoint_freq"]),
+        checkpoint_at_end=True,
+        local_dir=local_dir,
+        max_failures=0,
+        fail_fast=True,
+        #resume=True,
+        restore=restore_checkpoint,
+    )
 
     best_trial = analysis.get_best_trial("episode_reward_mean", mode="max")
     print(best_trial)
