@@ -1,0 +1,11 @@
+# Manifesto pos-resultado iter260 (H1-ext, run C2) — 2026-08-15T18:13:55-03:00
+commit: 9712529ccfda3a0930d78dbe19849ac827ac5b59
+veredito: INCONCLUSIVO (gate pre-registrado); iter235 permanece referencia
+UB pareado vs ckpt0 nao arredondado: +0.00023
+nota: trial PPO_Soccer_12b07 = tentativa EXIT=1 (caminho de restore invalido; 0 iteracoes; sem contaminacao)
+8b3d48357464f6c85f98bb2aac95d5ad4eb0897486fa5edcde35bb24dfdeb48b  training_runs/h1_runC2/ray_results/h1_runC2_iter260/PPO_Soccer_53674_00000_0_2026-08-15_20-10-13/checkpoint_000001/policies/policy_blue/policy_state.pkl
+0c63a15c9699a2f8d707fc926d1fdb44c911f44f53665bbfe703638b1e13a426  training_runs/h1_runC2/ray_results/h1_runC2_iter260/PPO_Soccer_53674_00000_0_2026-08-15_20-10-13/checkpoint_000001/policies/policy_yellow/policy_state.pkl
+7140bb3bd05ba05d4fd4f84ba8c90c0cdecbab05ccfa738415bc387cb00d6401  training_runs/h1_runC2/ray_results/h1_runC2_iter260/PPO_Soccer_53674_00000_0_2026-08-15_20-10-13/checkpoint_000001/algorithm_state.pkl
+9059fffd6c708ecaadb5bce61a9ab589b370694de9c727b97dfe97456b5994cf  experiment_results/crossplay_iter260_vs_ckpt3_bdet_ysample.jsonl
+3ed0c3e66f26819b824ea7be87f876b0cd3314db2e96f95b6a464d36180d4044  experiment_results/crossplay_iter260_vs_ckpt0_bdet_ysample.jsonl
+1d11a37f9da2606307e575e84ec986a5befd69fc424bef04133fc98904100573  scripts/analyze_iter260_gate.py

@@ -847,3 +847,62 @@ checkpoints intermediarios. Ressalvas adotadas:
   ts=9.668.520, agent 58.011.120, delta 38.520.
 - RNG de coleta nao fixada: 251..260 do C2 e outra realizacao estocastica
   (variancia, nao vies — descartadas nao influenciaram decisao).
+
+### 2026-08-15 17:58 — Run C2 concluido; gate iter260 INCONCLUSIVO; campanha encerrada
+
+Operacional: 1a tentativa do C2 falhou com EXIT=1 em 18 s por bug do launcher
+(--restore com caminho do host em vez de /campaign; trial PPO_Soccer_12b07,
+0 iteracoes, sem contaminacao; log em train_failed_hostpath.log). Launcher
+corrigido e commitado. Execucao valida (PPO_Soccer_53674): restore limpo do
+iter250, 10 iteracoes 251..260 com delta exato 38.520, episodios>0, 1 worker,
+0 restarts, 0 aborts, EXIT=0. ZERO "Updating Opponent"; hash yellow no
+checkpoint final = 0c63a15c EXATO → condicao confirmatoria satisfeita.
+Checkpoint iter260 validado (h1ext_iter260_checkpoint_validation.json):
+env 10.015.200, agent 60.091.200 = 6x, blue l2 63,9399, optimizer 32 tensores.
+
+Avaliacao final (80 seeds 0..79, blue det, yellow sample):
+| confronto | iter235 (ref) | iter260 |
+|---|---|---|
+| vs ckpt3 | 49W/0L/31T | 51W/0L/29T |
+| vs ckpt0 | 73W/0L/7T | 64W/0L/16T |
+- Pareado vs ckpt3: +0,025, IC97,5% [-0,166,+0,216] → LB<=0 (aceite FALHA).
+- Pareado vs ckpt0: -0,113, IC97,5% [-0,225,+0,00023] → UB>0 (rejeicao NAO
+  dispara); 0 derrotas em 160 episodios.
+- Regioes pre-registradas → INCONCLUSIVO. Promocao BLOQUEADA.
+
+policy-verifier (post-result): APROVADO COM RESSALVAS. Condicoes cumpridas:
+- iter260 classificado como INCONCLUSIVO (nao REJEITADO);
+- iter235 permanece a referencia offline e o checkpoint operacional grSim;
+- manifesto pos-resultado persistido
+  (experiment_results/h1ext_iter260_postresult_manifest.txt, blue iter260
+  8b3d4835, yellow 0c63a15c, JSONLs e script de analise);
+- UB nao arredondado registrado: +0,00023;
+- tentativa EXIT=1 documentada separadamente da execucao valida.
+
+DECISAO DE ENCERRAMENTO (futilidade/custo, nao rejeicao estatistica):
+a extensao permitida ate iter285 NAO sera usada. Justificativa: ganho
+marginal pontual caiu de +0,188 (210→235) para +0,025 (235→260); sinal de
+regressao vs ckpt0 (teste de sinal pos-hoc nos 17 pares discordantes:
+p~0,049 bilateral — analise de sensibilidade, nao gate); custo ~3h com baixa
+chance de LB97,5%>0. Registrado que isso NAO prova saturacao nem causa raiz;
+qualquer retomada futura ate iter285 consome a UNICA extensao ja prevista.
+
+## Encerramento da campanha 2 — melhor politica: iter235
+
+- MELHOR POLITICA VERIFICADA: iter235 (blue sha256 c88b8174...), checkpoint
+  completo em training_runs/h1_runB/.../checkpoint_000003 e export de
+  inferencia operacional em
+  volumes/dgx_checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003.
+- Ganhos comprovados sobre o estado inicial da campanha (iter210):
+  vs ckpt3 35W→49W (pareado +0,188 IC95% [+0,031,+0,344]);
+  vs ckpt0 46W→73W (+0,338 [+0,212,+0,463]); 0 derrotas.
+- Ganho de inferencia (H2): modo mean > sample (+0,312 [+0,162,+0,463]);
+  deploy grSim validado em mean (paridade erro 0, 16/16 contrato, janelas
+  480 s com gol, watchdogs e shutdown zero-command).
+- Comando de deploy: CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003 \
+    ACTION_MODE=mean ./start_policy.sh -d   (explicitos SEMPRE).
+- NAO promover para robo real (fora do escopo desta campanha).
+- Backlog para campanha futura: self-play real com regra de sync explicita
+  (yellow congelada desde iter210 e a causa-candidata do platô; exige
+  probe de 5 iteracoes + braco controle de mesma duracao + pool de
+  avaliacao ampliado com iter235).
