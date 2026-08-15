@@ -430,3 +430,17 @@ Vereditos:
 Sequencia adotada: H0 → auditorias CPU (sync, baseline iter210 cross-play,
 decomposicao reward) → H2 offline → H1 (25 iter) → [H3 se H1 nao resolver
 conversao] → gate curto grSim do vencedor. Orcamento reservado: ate 7 GPU-h.
+
+### 2026-08-15 — Hsync-audit (custo zero) — CONCLUIDO
+
+Auditoria do progress.csv do baseline (228 iteracoes):
+- 162 syncs blue→yellow (score>0.6) em 228 iteracoes; primeiro sync na iter58.
+- A partir da iter58, gap entre syncs: media 1,06, mediana 1, maximo 2.
+- Episodios por iteracao: media 109 (min 24, max 182) — o deque de 100
+  episodios renova quase inteiro a cada iteracao, entao o gate 0.6 fica
+  permanentemente aberto.
+
+Conclusao: o self-play degenerou em adversario quase-espelho (yellow = blue
+de ~1 iteracao atras) desde cedo. Implicacoes: (a) diversidade de adversario
+minima — candidato natural a hipotese futura de opponent pool/threshold mais
+alto; (b) reforca usar pool FIXO (ckpt0/ckpt3) como metrica, nunca o espelho.
