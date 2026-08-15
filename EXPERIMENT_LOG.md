@@ -737,3 +737,77 @@ brutos nao comparaveis sem normalizacao por steps.
 Pendencias para o gate grSim do iter235 (rodada propria): export de inferencia,
 paridade treino vs standalone (strict, mean), gate cartesiano de comandos,
 ativacao gradual com modo deterministic (decisao H2), watchdogs de frescor.
+
+### 2026-08-15 — Gate grSim do iter235: APROVADO COM RESSALVAS (operacional)
+
+Execucao autonoma autorizada pelo usuario (testar grSim e seguir decidindo).
+
+Gates executados (artefatos em experiment_results/grsim_gate_iter235/):
+- Export de inferencia para volumes/.../campaign2_iter235/checkpoint_000003
+  (16 tensores/531.709 params por policy); pesos BIT-EXATOS vs fonte
+  (verificacao numpy array_equal em ambas as policies); SHA-256 do export
+  persistido em export_sha256.txt.
+- Paridade RLlib vs standalone no runtime CPU: INFERENCE_PARITY_OK, 64
+  vetores, erro 0.000e+00 em logits, values e deterministic_sample
+  (strict=True). Persistido em parity_and_contract.txt.
+- Contrato: 16/16 testes (unittest tests.test_grsim_contract) OK.
+- Pipeline real (docker-compose.grsim.yml, network host): 3 containers
+  healthy; iter235 carregado nos dois times; 3 robos com acoes distintas.
+- Janela mean 480 s (monitor_mean_480s.json): 11 episodios completos, 80.024
+  pacotes, 1 gol blue (48,02 s); evento yellow t=0,01 s EXCLUIDO como
+  artefato de inicializacao (teleporte de kickoff no 1o frame).
+- Janela sample 480 s (monitor_sample_480s.json): 1 gol blue (238,84 s).
+- Stale: 25 eventos "Visao incompleta/stale; enviando comandos zero" no log
+  persistido (logs/policy.log), agrupados em startup/fronteiras de kickoff —
+  correcao do relato anterior ("0 stale" contava só stdout do container).
+  Watchdog de frescor ATUOU corretamente emitindo zero-command.
+- Shutdown: stop_policy.sh limpo; zero-commands no finally (3x por time,
+  deploy_policy_grsim.py) + cobertura por teste de contrato.
+- Operacional: submodulo rSoccer inicializado no pin 2520207 (v1.2.0) para o
+  build do Dockerfile.policy; 3 containers Exited antigos removidos.
+
+policy-verifier: APROVADO COM RESSALVAS. iter235 promovido a checkpoint
+OPERACIONAL do deploy grSim em modo mean — rotulado como "operacional e
+compativel", SEM alegacao de superioridade no grSim (janelas espelho nao sao
+comparacao controlada com ckpt2/sample). Condicoes cumpridas: hash do export
+persistido e bit-exatidao verificada; contagem real de stale corrigida;
+CHECKPOINT_PATH e ACTION_MODE=mean devem ser SEMPRE explicitos no start
+(default do compose segue sample). NAO promover para robo real.
+
+### 2026-08-15 — Pre-registro do run C (H1-ext iter235→260)
+
+Debate idea-debater: APOIO COM MUDANCAS para H1-ext; H3 DESCARTADA ate
+evidencia offline de dispersao residual como gargalo (entropia ja caiu de
+-0,31 a -1,04 sozinha; mean ja aceito); self-play real adiado para campanha
+propria com regra de sync explicita.
+
+policy-verifier (preflight): REPROVADO ate corrigir pre-registro; correcoes
+abaixo ADOTADAS antes do lancamento:
+- Manifesto preflight imutavel: experiment_results/h1ext_runC_preflight_manifest.txt
+  (commit 07d5c1a, hashes de RL_train.py, config, watchdog, harness, rewards
+  hist e do checkpoint fonte iter235 blue c88b8174/yellow 0c63a15c).
+- Receita identica ao run B; unica variavel = duracao. Restore iter235,
+  stop 10.015.200 (iter260), checkpoint final pre-congelado como candidato
+  (sem selecao intermediaria).
+- Sync da yellow: PERMITIDO (faz parte da receita historica score>0.6). Se
+  ocorrer em 236..260: registrar a iteracao, comparar hash da yellow no
+  checkpoint final vs 0c63a15c e reclassificar o braco como "continuacao com
+  adversario adaptativo" (nao aborta, nao muda o gate esportivo).
+- Gate de restore: primeiro resultado deve ter iteration=236 e
+  ts=9.090.720 (delta exato 38.520); divergencia aborta o run.
+- Regioes de decisao COMPLETAS: primaria vs ckpt3 (baseline iter235
+  49W/0L/31T) e nao-regressao vs ckpt0 (73W/0L/7T), 80 seeds fixos 0..79,
+  blue deterministic vs yellow sample.
+  - ACEITE: pareado vs ckpt3 com IC97,5% LB>0 E ponto vs ckpt0 >=0 E
+    derrotas adicionais <=1 (somando os dois confrontos).
+  - REJEICAO: ponto vs ckpt3 <=0 OU regressao vs ckpt0 com UB<0 OU
+    derrotas adicionais >=4 (limiar material = 5 pp).
+  - INCONCLUSIVO: qualquer outra regiao — bloqueia promocao; permite UMA
+    extensao confirmatoria ate iter285 tambem com IC97,5% (Bonferroni,
+    2 olhares, alpha global 5%). Sem LB>0 em 285, encerra a receita
+    conservadora.
+- Telemetria adicional obrigatoria: gols pro/contra e derrotas por confronto
+  (degradacao defensiva nao pode ser mascarada pelo saldo).
+- Gates operacionais inalterados: preflight de recursos (2 medicoes),
+  watchdog canonico ativo, fail-fast interno, validacao estrutural e por
+  hash do checkpoint final antes da avaliacao.

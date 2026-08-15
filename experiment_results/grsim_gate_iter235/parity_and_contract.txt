@@ -1,0 +1,4 @@
+INFERENCE_PARITY_OK vectors=64 max_logits_error=0.000e+00 max_value_error=0.000e+00
+Ran 16 tests in 0.069s
+
+OK

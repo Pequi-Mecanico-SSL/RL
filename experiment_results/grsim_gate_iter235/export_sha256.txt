@@ -1,0 +1,4 @@
+04f6ddfa488cdb644510caa2aa862462e2378a2c49c7e547bf5909b4d5743930  volumes/dgx_checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003/policies/policy_blue/policy_state.pkl
+54d9e7a2e942ea19eb0f865957c617be3c157aac879209fcc3505e1b67d15b57  volumes/dgx_checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003/policies/policy_yellow/policy_state.pkl
+policy_blue export==fonte bit-exato: True | tensores: 16
+policy_yellow export==fonte bit-exato: True | tensores: 16
