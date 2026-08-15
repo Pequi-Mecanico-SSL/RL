@@ -444,3 +444,34 @@ Conclusao: o self-play degenerou em adversario quase-espelho (yellow = blue
 de ~1 iteracao atras) desde cedo. Implicacoes: (a) diversidade de adversario
 minima — candidato natural a hipotese futura de opponent pool/threshold mais
 alto; (b) reforca usar pool FIXO (ckpt0/ckpt3) como metrica, nunca o espelho.
+
+### 2026-08-15 — Baseline cross-play do iter210 + triagem H2
+
+Harness: scripts/evaluate_checkpoints_cpu.py no container historico, contrato
+montado (rewards.py e945e9a sha256 9379220616..., rSoccer c684c2b via mount
+read-only do worktree; observations.py NAO existe em e945e9a — o env legado
+calcula as 77 obs internamente, correcao ao registro da consolidacao).
+
+Triagem 20 seeds, ambos os times no MESMO modo (protocolo antigo):
+| confronto | blue | gols | W/L/T |
+|---|---|---|---|
+| iter210 vs ckpt3 | det | 0x20 | 0/20/0 |
+| iter210 vs ckpt3 | sample | 4x1 | 4/1/15 |
+| iter210 vs ckpt0 | det | 0x0 | 0/0/20 |
+| iter210 vs ckpt0 | sample | 12x0 | 12/0/8 |
+
+CONFUSOR IDENTIFICADO: em det x det o env e deterministico → 20 episodios sao
+1 episodio repetido; o 0x20 vs ckpt3 e uma unica trajetoria perdedora. Nao
+usar det x det como metrica.
+
+Matriz H2 corrigida (harness ganhou --yellow-mode; yellow FIXA em sample,
+mesmos 20 seeds):
+| blue | gols | W/L/T |
+|---|---|---|
+| deterministic | 10x0 | 10/0/10 |
+| sample | 4x1 | 4/1/15 |
+
+Sinal inverte a intuicao inicial: blue deterministic > blue sample contra
+yellow sample. Extensao para 80 seeds pareados em andamento (aceite: IC95%
+da diferenca pareada). Nota: iter210 (10 iteracoes alem do ckpt3) vence
+ckpt3 por 10x0 em modo det — evidencia preliminar pro-H1.

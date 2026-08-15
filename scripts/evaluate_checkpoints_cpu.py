@@ -109,7 +109,7 @@ def load_env_config(experiment: str) -> dict:
     return base
 
 
-def compute_actions(models: dict, observations: dict, stochastic: bool) -> dict:
+def compute_actions(models: dict, observations: dict, stochastic_by_team: dict) -> dict:
     result = {}
     with torch.no_grad():
         for team in ("blue", "yellow"):
@@ -120,6 +120,7 @@ def compute_actions(models: dict, observations: dict, stochastic: bool) -> dict:
             logits, _ = models[team](batch)
             signal = [-1, 1, -1, 1] if team == "yellow" else [1, 1, 1, 1]
             distribution = InferenceBetaDist(logits, signal=signal)
+            stochastic = stochastic_by_team[team]
             values = distribution.sample() if stochastic else distribution.deterministic_sample()
             values = values.cpu().numpy()
             if not np.isfinite(values).all():
@@ -129,7 +130,11 @@ def compute_actions(models: dict, observations: dict, stochastic: bool) -> dict:
     return result
 
 
-def run_episode(models: dict, env_config: dict, seed: int, stochastic: bool) -> dict:
+def run_episode(models: dict, env_config: dict, seed: int, stochastic: bool,
+                yellow_stochastic: bool = None) -> dict:
+    if yellow_stochastic is None:
+        yellow_stochastic = stochastic
+    stochastic_by_team = {"blue": stochastic, "yellow": yellow_stochastic}
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -147,7 +152,7 @@ def run_episode(models: dict, env_config: dict, seed: int, stochastic: bool) -> 
         steps = 0
         info = {}
         while not done["__all__"] and not truncated["__all__"]:
-            actions = compute_actions(models, observations, stochastic)
+            actions = compute_actions(models, observations, stochastic_by_team)
             observations, rewards, done, truncated, info = env.step(actions)
             for name, reward in rewards.items():
                 returns[name] += float(reward)
@@ -164,6 +169,7 @@ def run_episode(models: dict, env_config: dict, seed: int, stochastic: bool) -> 
         return {
             "seed": seed,
             "mode": "stochastic" if stochastic else "deterministic",
+            "yellow_mode": "stochastic" if yellow_stochastic else "deterministic",
             "steps": steps,
             "sim_seconds": steps / env_config["fps"],
             "wall_seconds": time.monotonic() - started,
@@ -197,6 +203,8 @@ def main() -> int:
                         help="checkpoint fixo para a yellow (cross-play); default = espelho do blue")
     parser.add_argument("--episodes", type=int, default=30)
     parser.add_argument("--mode", choices=("deterministic", "stochastic", "both"), default="deterministic")
+    parser.add_argument("--yellow-mode", choices=("deterministic", "stochastic", "same"), default="same",
+                        help="modo fixo da yellow; 'same' replica o modo do blue (comportamento antigo)")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
@@ -222,10 +230,11 @@ def main() -> int:
             checkpoint_name = str(Path(experiment).name + "/" + Path(checkpoint).name)
             for stochastic in modes:
                 mode = "stochastic" if stochastic else "deterministic"
+                yellow_stochastic = None if args.yellow_mode == "same" else (args.yellow_mode == "stochastic")
                 for seed in range(args.episodes):
                     if (checkpoint_name, mode, seed) in complete:
                         continue
-                    row = run_episode(models, env_config, seed, stochastic)
+                    row = run_episode(models, env_config, seed, stochastic, yellow_stochastic)
                     row["checkpoint"] = checkpoint_name
                     row["yellow_checkpoint"] = yellow_name
                     row["field_type"] = env_config["field_type"]
