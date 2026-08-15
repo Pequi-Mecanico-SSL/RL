@@ -643,3 +643,19 @@ usuarios); campanha segue no host local.
 Run B lancado 12:18 (preflight: MemAvailable 10,74/10,73 GB, 0 CUDA apps,
 VRAM 11.544 MiB, disco 37,2 GB): restore iter218, stop 9.052.200 (iter235),
 container --name h1_runB, watchdog em training_runs/h1_runB/watchdog.log.
+
+### 2026-08-15 12:23 — Run B tentativa 1 ABORTADA pelo watchdog (falso positivo)
+
+O watchdog matou o container aos ~5 min: media 6,88 GiB por memory.current.
+Diagnostico: memory.current do cgroup v2 inclui page cache (reciclavel pelo
+kernel ate o cap), enquanto o gate de 6,5 GiB foi definido na semantica do
+docker stats (usage - inactive_file), usada no run A e no smoke. Falso
+positivo de instrumentacao, nao pressao real: zero iteracoes aceitas, nenhum
+progress.csv/checkpoint gerado — restore do iter218 permanece limpo. A
+tentativa ficou quarentenada em ray_results/h1_runB_iter235_aborted_wd_falsepos
+e o log em watchdog_falsepos.log.
+
+Correcao: scripts/watchdog_host_memory.sh agora computa
+CONT = memory.current - inactive_file (paridade com docker stats); limites
+inalterados (host < 2,5 GB ou container >= 6,5 GiB). Run B relancado 12:27
+com preflight aprovado (10,78/10,80 GB, 0 CUDA apps).

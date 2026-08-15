@@ -15,8 +15,13 @@ while true; do
   AVAIL=$(awk '/MemAvailable/{print $2*1024}' /proc/meminfo)
   CONT=0
   if [[ -n "$CID" ]]; then
-    CG="/sys/fs/cgroup/system.slice/docker-$(docker inspect -f '{{.Id}}' "$CID" 2>/dev/null).scope/memory.current"
-    [[ -r "$CG" ]] && CONT=$(cat "$CG")
+    # paridade com docker stats: usage - inactive_file (memory.current inclui page cache)
+    CGDIR="/sys/fs/cgroup/system.slice/docker-$(docker inspect -f '{{.Id}}' "$CID" 2>/dev/null).scope"
+    if [[ -r "$CGDIR/memory.current" ]]; then
+      CUR=$(cat "$CGDIR/memory.current")
+      INACT=$(awk '/^inactive_file/{print $2}' "$CGDIR/memory.stat")
+      CONT=$((CUR - INACT))
+    fi
     # container terminou?
     if ! docker ps -q --no-trunc | grep -q "$(docker inspect -f '{{.Id}}' "$CID" 2>/dev/null)"; then
       echo "$(date -Is) container encerrou; watchdog saindo" >> "$LOG"; exit 0
