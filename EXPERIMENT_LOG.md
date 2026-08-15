@@ -322,11 +322,30 @@ Fatos de contrato verificados no merge:
   (compativel com rSoccer v1.2.0, submodulo pinado em 2520207). As assinaturas
   mudaram de Field/Frame para dict — INCOMPATIVEL com o env historico c684c2b.
 - CONSEQUENCIA: continuar treino do iter210 exige montar as versoes
-  historicas por cima do workdir no container, por exemplo:
+  historicas de AMBOS os contratos por cima do workdir no container:
     git show e945e9a:rewards.py > /tmp/rewards_hist.py
-    docker run ... -v /tmp/rewards_hist.py:/campaign/rewards.py:ro ...
+    git show e945e9a:observations.py > /tmp/observations_hist.py
+    docker run ... \
+      -v /tmp/rewards_hist.py:/campaign/rewards.py:ro \
+      -v /tmp/observations_hist.py:/campaign/observations.py:ro ...
   O RL_train.py da campanha importa DENSE_REWARDS/SPARSE_REWARDS, presentes
   em ambas as versoes, mas a semantica difere; o smoke iter211 deve usar a
   versao historica.
 - config.yaml ficou na versao grsim (checkpoint_freq 25, stack_size etc.);
   o treino da campanha usa config.control-*.yaml proprios, sem impacto.
+
+#### Evidencias pos-merge (auditoria policy-verifier)
+
+- git status limpo; diff HEAD vs experiment/policy-improvement em RL_train.py e
+  Dockerfile vazio; diff HEAD vs 139a7f1 em requirements.txt, rewards.py,
+  observations.py, config.yaml, scripts/model/, deploy_policy_grsim.py,
+  docker-compose.grsim*.yml, Dockerfile.policy, tests/test_grsim_contract.py,
+  *_pb2.py e scripts/sim2real/ vazio.
+- gitlink rSoccer = 2520207 (v1.2.0), coerente com o deploy grSim validado.
+- Checkpoint iter210 copiado para training_runs/ deste diretorio: SHA-256
+  identico em 8/8 arquivos (manifesto em
+  experiment_results/iter210_checkpoint_sha256.txt).
+- 5/5 testes do watchdog e validacao estrutural do checkpoint reproduzidos no
+  container a partir deste diretorio (-w /campaign).
+- deploy_policy.py corrigido: load_state_dict agora usa strict=True (o
+  entrypoint validado deploy_policy_grsim.py ja usava strict=True).

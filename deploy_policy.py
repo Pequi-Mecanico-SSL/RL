@@ -185,7 +185,9 @@ class GrSimDeployer:
                     new_layer_name = layer_name
             weights_dict[new_layer_name] = torch.tensor(weights)
 
-        model.load_state_dict(weights_dict, strict=False)
+        # strict=True: falha em chaves ausentes/inesperadas, exigido pelo gate
+        # de paridade de inferencia (nao aceitar carregamento permissivo).
+        model.load_state_dict(weights_dict, strict=True)
         model.to(self.device)
 
         logger.info("Modelo carregado com sucesso")
