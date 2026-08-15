@@ -520,3 +520,13 @@ aceitas, nenhum checkpoint gerado, host protegido pelo cap.
 Decisao pre-registrada do debate: NAO subir o cap; reduzir para 1 worker.
 Nova config config.control-1w.yaml (unico diff da 2w: num_cpus 3→2,
 num_workers 2→1). Repetindo H0 com cap 7g.
+
+### 2026-08-15 — H0 tentativa 2 (1 worker, cap 7g, shm 4g): REPROVADO por OOM
+
+Mesmo padrao: Ray memory monitor matou worker. Diagnostico: o object store
+(Plasma) e alocado em /dev/shm com ~30% da memoria do no detectado e CONTA no
+cgroup: processos (~4,4 GB: PPO.train 2,26 + worker 1,3 + raylet/gcs/driver
+~0,8) + plasma ~2,1 GB ≈ 93% do cap → monitor mata em 95%.
+Correcao (mantendo cap 7g do debate): reduzir --shm-size para 1536m, que
+limita o object store por construcao. Batch trafegado por iteracao ~0,6 GB,
+cabe com folga. Tentativa 3 = 1 worker, cap 7g, shm 1536m.
