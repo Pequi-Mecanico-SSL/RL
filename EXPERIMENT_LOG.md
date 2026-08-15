@@ -906,3 +906,50 @@ qualquer retomada futura ate iter285 consome a UNICA extensao ja prevista.
   (yellow congelada desde iter210 e a causa-candidata do platô; exige
   probe de 5 iteracoes + braco controle de mesma duracao + pool de
   avaliacao ampliado com iter235).
+
+---
+
+# Campanha 3 — H-sync: adversario obsoleto como causa do platô (2026-08-15)
+
+## Hipotese e desenho
+
+H-sync: o platô 235→260 foi causado pela yellow congelada no iter210 (50
+iteracoes defasada; zero syncs em 211..260). Predicao: treinar a partir do
+iter235 com yellow=iter235 restaura o gradiente.
+
+Debate idea-debater: APOIO COM MUDANCAS — todas adotadas:
+- yellow CONGELADA em iter235 no braco D (guarda FREEZE_OPPONENT=1 em
+  RL_train.py, no-op sem a env var; preserva semantica dos runs A-C2);
+- contraste causal primario = D vs C (controle real ja pago, yellow=iter210);
+- probe de 5 iteracoes (235→240) com seeds diagnosticos 80..119 ANTES das 25;
+  seeds 0..79 reservados para o endpoint iter260;
+- restore descartavel validando pesos efetivamente carregados;
+- CONTINUAR do probe e gate exploratorio de custo, NAO confirmacao.
+
+## Diario da campanha 3
+
+### 2026-08-15 — Preparacao do braco D e pareceres
+
+- Cirurgia de checkpoint: scripts/make_synced_checkpoint.py copia o iter235 e
+  substitui SOMENTE policy_yellow.weights pelos pesos da blue (cloudpickle,
+  spec/action dist da yellow preservada). Saida: 16 tensores, 531.709 params,
+  yellow==blue bit-exato, l2=62,8677. Artefato:
+  training_runs/h3_sync/checkpoint_iter235_ysync (blue c88b8174 INALTERADO,
+  yellow 173be554).
+- Restore descartavel: scripts/validate_restore_weights.py (PPO 0 workers,
+  CPU) → RESTORE_VALIDATION_OK iteration=235, yellow==blue bit-exato nos
+  pesos carregados (experiment_results/h3sync_restore_validation.log).
+- policy-verifier preflight 1: REPROVADO — 7 condicoes. Atendidas:
+  harness ganhou --seed-start (seeds absolutos); dry-run {80,81} verificado
+  (h3sync_dryrun_seeds8081.jsonl); criterios exatos pre-registrados
+  (D1/D0/Dref, score ±1/0, margens explicitas); C240 validado
+  (h3sync_C240_checkpoint_validation.json: iter240, yellow 0c63a15c);
+  manifesto v2 completo (h3sync_probe_preflight_manifest_v2.txt).
+- policy-verifier preflight 2: INCONCLUSIVO — exigiu persistir restore e
+  preflight de recursos. Atendidos: h3sync_restore_validation.log e
+  h3sync_probe_resource_preflight.txt (10,22/10,41 GB, 0 CUDA apps, VRAM
+  11,4 GiB, disco 40,6 GB — 2 medicoes/20 s PASSAM). JSONLs de avaliacao
+  serao um por confronto (chave de retomada nao inclui yellow_checkpoint).
+- Run D1 lancado 19:12 (container h3_probeD1, FREEZE_OPPONENT=1, restore
+  cirurgico, stop 9.244.800 = iter240, watchdog concorrente com CID ativo
+  antes da iter236).

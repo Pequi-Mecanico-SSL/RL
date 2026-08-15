@@ -163,14 +163,18 @@ class SelfPlayUpdateCallback(DefaultCallbacks):
         info["result"]["custom_metrics"]["score"] = current_score
 
         if current_score > 0.6:
-            print("---- Updating Opponent!!! ----")
-            algorithm.set_weights(
-                {
-                    "policy_yellow": algorithm.get_weights(["policy_blue"])["policy_blue"],
-                }
-            )
-            score_counter = ray.get_actor("score_counter")
-            score_counter.reset.remote()
+            if os.environ.get("FREEZE_OPPONENT") == "1":
+                # Braco experimental H-sync: adversario fixo durante o run
+                print("---- Sync suprimido (FREEZE_OPPONENT=1) ----")
+            else:
+                print("---- Updating Opponent!!! ----")
+                algorithm.set_weights(
+                    {
+                        "policy_yellow": algorithm.get_weights(["policy_blue"])["policy_blue"],
+                    }
+                )
+                score_counter = ray.get_actor("score_counter")
+                score_counter.reset.remote()
 
 parser = argparse.ArgumentParser(description="Treina multiagent SSL-EL.")
 parser.add_argument("--evaluation", action="store_true", help="Irá renderizar um episódio de tempos em tempos.")

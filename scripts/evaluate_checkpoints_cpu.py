@@ -202,6 +202,8 @@ def main() -> int:
     parser.add_argument("--yellow-checkpoint", default=None,
                         help="checkpoint fixo para a yellow (cross-play); default = espelho do blue")
     parser.add_argument("--episodes", type=int, default=30)
+    parser.add_argument("--seed-start", type=int, default=0,
+                        help="primeiro seed absoluto; roda seeds [seed_start, seed_start+episodes)")
     parser.add_argument("--mode", choices=("deterministic", "stochastic", "both"), default="deterministic")
     parser.add_argument("--yellow-mode", choices=("deterministic", "stochastic", "same"), default="same",
                         help="modo fixo da yellow; 'same' replica o modo do blue (comportamento antigo)")
@@ -231,7 +233,7 @@ def main() -> int:
             for stochastic in modes:
                 mode = "stochastic" if stochastic else "deterministic"
                 yellow_stochastic = None if args.yellow_mode == "same" else (args.yellow_mode == "stochastic")
-                for seed in range(args.episodes):
+                for seed in range(args.seed_start, args.seed_start + args.episodes):
                     if (checkpoint_name, mode, seed) in complete:
                         continue
                     row = run_episode(models, env_config, seed, stochastic, yellow_stochastic)

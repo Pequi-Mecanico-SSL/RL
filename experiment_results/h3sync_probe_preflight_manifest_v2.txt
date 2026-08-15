@@ -1,0 +1,49 @@
+# Preflight v2 probe D1 (H-sync, campanha 3) — 2026-08-15
+commit_branch_grsim: 5740bf2f0835c1ecf4693b7cf2598dc7c86a7d6f (working tree com mudancas ainda nao commitadas listadas abaixo)
+image_treino: sha256:3a94c6cf43701204cc15c8834619b1d3d0deaef99a506857e21e16af2cc7e1c9
+rSoccer_worktree: /home/marcos/Documentos/RL-policy-improvement/rSoccer @ c684c2bcb308c88cf8589749137991ed921daff5
+
+## Hashes completos
+ad9af975874c14e0831230ea55e395617b700989d360da38befa530c1824bac5  RL_train.py
+fceac59c271b8cef87bbb091e47b78f4cb450f8e1afa976b6eb342f5757a06e3  config.control-1w.yaml
+a0d6187f0afec041a85df2a705582bcf85ba0cfeb2dce658a4d2153983c1ccb7  scripts/watchdog_host_memory.sh
+ddd8aa4a73a827977ccb7c8beafdfd3049abd1c34b33a185849553e46f573444  scripts/evaluate_checkpoints_cpu.py
+f13f1ee77c727ea0ef67d19034cfa5e1c21c80f9f8cfdc597a0fdf331d883135  scripts/make_synced_checkpoint.py
+f92f5058e38453b0f0e3900b93c053a11b1810bf7bca282720ceecf07489fec2  scripts/validate_restore_weights.py
+93792206165425c235a7a7acc5eaba394695edfebea1b91597cd960b7432fced  /tmp/contrato_hist/rewards.py
+c88b81744191f53d30700730d3b04a6ffb7d2802702c28b932d00353aad72699  training_runs/h3_sync/checkpoint_iter235_ysync/policies/policy_blue/policy_state.pkl
+173be5541ca726eedc5a68421c7393994402de6c95752b9c82c3a9ae60029262  training_runs/h3_sync/checkpoint_iter235_ysync/policies/policy_yellow/policy_state.pkl
+bead8ac500357288343c5b68dc97b4dc1a5e639b38e7d9346ed5cdfcc23a26a2  training_runs/h1_runC/ray_results/h1_runC_iter260/PPO_Soccer_d6854_00000_0_2026-08-15_17-57-53/checkpoint_000000/policies/policy_blue/policy_state.pkl
+0c63a15c9699a2f8d707fc926d1fdb44c911f44f53665bbfe703638b1e13a426  training_runs/h1_runC/ray_results/h1_runC_iter260/PPO_Soccer_d6854_00000_0_2026-08-15_17-57-53/checkpoint_000000/policies/policy_yellow/policy_state.pkl
+16e8ddad1ebf76b8008074e0a225a1b876199179e67790b1fc51b6f2a108308e  volumes/dgx_checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000000/policies/policy_blue/policy_state.pkl
+c1a90bf4379c85b59f3ab83f5bd32f06d371455fc678164802b8bfe96b68e2d2  volumes/dgx_checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003/policies/policy_blue/policy_state.pkl
+c88b81744191f53d30700730d3b04a6ffb7d2802702c28b932d00353aad72699  training_runs/h1_runB/ray_results/h1_runB_iter235/PPO_Soccer_02d9a_00000_0_2026-08-15_15-50-16/checkpoint_000003/policies/policy_blue/policy_state.pkl
+
+## Launcher run D1 (comando integral)
+docker run --rm --gpus all --memory=7g --memory-swap=7g --shm-size=1536m \
+  --name h3_probeD1 -w /campaign -v $PWD:/campaign \
+  -v $PWD/training_runs/h3_sync/probeD1/ray_results:/root/ray_results \
+  -v /tmp/contrato_hist/rewards.py:/campaign/rewards.py:ro \
+  -v /home/marcos/Documentos/RL-policy-improvement/rSoccer:/campaign/rSoccer:ro \
+  -e PYTHONPATH=/campaign:/campaign/rSoccer -e FREEZE_OPPONENT=1 \
+  rl-policy-training:c684c2b python RL_train.py --config config.control-1w.yaml \
+  --restore /campaign/training_runs/h3_sync/checkpoint_iter235_ysync \
+  --stop-timesteps 9244800 --experiment-name h3_probeD1_iter240
++ watchdog canonico: scripts/watchdog_host_memory.sh h3_probeD1 training_runs/h3_sync/probeD1/watchdog.log
+
+## Criterios pre-registrados (score win=+1 timeout=0 loss=-1, blue)
+avaliacoes (seeds 80..119, 40 eps, blue det, yellow sample):
+  D240 vs ckpt3 | D240 vs ckpt0 | C240 vs ckpt3 | C240 vs ckpt0 | iter235 vs ckpt3
+D1 = media pareada[score(D240 vs ckpt3) - score(C240 vs ckpt3)]
+D0 = media pareada[score(D240 vs ckpt0) - score(C240 vs ckpt0)]
+Dref = media pareada[score(D240 vs ckpt3) - score(iter235 vs ckpt3)]  (oponente comum, nao confronto direto)
+CONTINUAR (gate exploratorio de custo; NAO confirma H-sync): D1 > 0 E
+  derrotas(D240, ckpt3+ckpt0) <= derrotas(C240, ckpt3+ckpt0) E D0 >= -0.05
+ABORTAR futilidade: D1 <= 0 E Dref <= 0
+AMBIGUO: caso contrario -> sem apoio empirico; continuacao exige novo parecer
+gates D240: iteration=240, env=9244800, agent=55468800, finitude, optimizer integro,
+  hash yellow == 173be5541ca726ee... (congelada), ZERO "Updating Opponent",
+  contagem de "Sync suprimido" registrada
+seeds 0..79: INTOCADOS ate endpoint iter260 (dry-run seeds {80,81} verificado em
+  experiment_results/h3sync_dryrun_seeds8081.jsonl)
+conclusao restrita: 1 seed de treino; C e D sao realizacoes estocasticas distintas

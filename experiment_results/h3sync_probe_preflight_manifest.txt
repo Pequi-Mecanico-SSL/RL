@@ -1,0 +1,22 @@
+# Preflight probe D1 (H-sync, campanha 3) — 2026-08-15
+hipotese: platô 235→260 causado por adversario obsoleto (yellow=iter210);
+braco D treina a partir do iter235 com yellow=iter235 CONGELADA (FREEZE_OPPONENT=1).
+unica variavel vs controle (run C real): estado da yellow (iter235 vs iter210).
+debate idea-debater: APOIO COM MUDANCAS (mudancas adotadas: yellow congelada,
+contraste causal primario D vs C, probe 5 iter antes de 25, restore descartavel).
+receita: canonica (1w, cap 7g, shm 1536m, watchdog, contrato historico e945e9a).
+restore: training_runs/h3_sync/checkpoint_iter235_ysync (cirurgia validada:
+OK 16 tensores 531709 params yellow==blue bit-exato l2=62.8677; restore
+descartavel RESTORE_VALIDATION_OK iteration=235).
+stop probe: 9244800 (iter240, 5 iteracoes).
+gate restore: 1o resultado iteration=236 ts=9090720 delta=38520.
+avaliacao diagnostica: seeds 80..119 (RESERVA: 0..79 so no endpoint iter260),
+blue det vs yellow sample; D240 e C240 (=checkpoint_000000 run C d6854) vs ckpt3;
+secundarias: vs ckpt0 e D240 vs iter235.
+continuar: ponto pareado D240-C240 > 0 E sem derrota adicional E sem regressao
+material vs ckpt0. abortar futilidade: D240-C240<=0 E D240-iter235<=0.
+ambiguo: sinais divergentes (sem apoio empirico; continuacao so como exploracao).
+hashes: RL_train.py ad9af975874c14e0 (novo: guarda FREEZE_OPPONENT, no-op default)
+config.control-1w.yaml fceac59c271b8cef | watchdog a0d6187f0afec041
+make_synced_checkpoint.py f13f1ee77c727ea0
+ckpt cirurgico blue c88b81744191f53d (== iter235 original) yellow 173be5541ca726ee
