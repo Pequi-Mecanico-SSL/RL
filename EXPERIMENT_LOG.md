@@ -510,3 +510,13 @@ Veredito APOIO COM MUDANCAS para executar H0 agora:
 - H0 NAO autoriza H1: probe intermediario de 8 iteracoes obrigatorio antes
   das 25 (o OOM anterior surgiu apos 6 iteracoes validas), aceite = pico de
   memoria estavel nas ultimas 4 iteracoes com folga >= 0,5 GiB do cap.
+
+### 2026-08-15 — H0 tentativa 1 (2 workers, cap 7g): REPROVADO por OOM
+
+Ray memory monitor matou RolloutWorker no startup: 6,88/7,00 GB no cgroup
+(PPO.train 2,26 GB + workers 1,34/1,12 GB + driver 0,32 GB + object store em
+/dev/shm dentro do cap). fail_fast funcionou: TuneError, zero iteracoes
+aceitas, nenhum checkpoint gerado, host protegido pelo cap.
+Decisao pre-registrada do debate: NAO subir o cap; reduzir para 1 worker.
+Nova config config.control-1w.yaml (unico diff da 2w: num_cpus 3→2,
+num_workers 2→1). Repetindo H0 com cap 7g.
