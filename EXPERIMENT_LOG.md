@@ -530,3 +530,29 @@ cgroup: processos (~4,4 GB: PPO.train 2,26 + worker 1,3 + raylet/gcs/driver
 Correcao (mantendo cap 7g do debate): reduzir --shm-size para 1536m, que
 limita o object store por construcao. Batch trafegado por iteracao ~0,6 GB,
 cabe com folga. Tentativa 3 = 1 worker, cap 7g, shm 1536m.
+
+### 2026-08-15 — H0 APROVADO (tentativa 4: 1 worker, cap 7g, shm 1536m)
+
+Tentativa 3 (shm 1536m) TERMINATED com iter211 exata em 328 s, mas o
+checkpoint foi para /root/ray_results DENTRO do container efemero:
+tune.run(local_dir=...) e ignorado no Ray 2.10. Correcao sem tocar codigo:
+montar /root/ray_results no host. Tentativa 4 = mesma config com o mount.
+
+Aceite verificado (PPO_Soccer_b6960, training_runs/h0_smoke/ray_results/
+control_1w_smoke_iter211/):
+- training_iteration=211; ts=8.127.720; this_iter=38.520;
+  agent=48.766.320 (=6x env); episodes_this_iter=38>0;
+- 1 worker saudavel; 0 restarts; 0 faulty episodes; EXIT=0;
+- checkpoint_000000 integro: counters exatos, blue l2=61,537 finito,
+  optimizer 32 tensores; validado no container read-only;
+- pico do container na janela do run: 4,29 GiB < 6,5 GiB; zero eventos OOM;
+- custo: ~320 s/iteracao com 1 worker.
+
+Receita operacional canonica de treino (registrada): cap 7g + swap 7g,
+shm 1536m, 1 worker (config.control-1w.yaml), mounts do contrato historico,
+mount obrigatorio de /root/ray_results para persistencia.
+
+H1 desenho (conforme debate): run A = restore iter210, stop 8.397.360
+(8 iteracoes, ate iter218); gate de memoria estavel; run B = retomar do
+checkpoint_at_end ate 9.052.200 (iter235). Avaliacao primaria SO na iter235:
+blue deterministic vs ckpt3 yellow sample, 20 seeds triagem → 80 pareados.
