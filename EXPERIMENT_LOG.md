@@ -971,3 +971,38 @@ Debate idea-debater: APOIO COM MUDANCAS — todas adotadas:
   o gate substantivo e a igualdade bit-exata dos pesos, que PASSOU.
 - Avaliacoes diagnosticas em andamento (seeds 80..119, JSONL separado por
   confronto): D240/C240 vs ckpt3 e ckpt0, iter235 vs ckpt3.
+
+### 2026-08-15 19:5x — Probe D1: DECISAO CONTINUAR; run D2 lancado (240→260)
+
+Avaliacao diagnostica (seeds 80..119, blue det, yellow sample, JSONL separado
+por confronto em experiment_results/h3sync_*_s80.jsonl):
+| confronto | W/L/T |
+|---|---|
+| D240 vs ckpt3 | 26W/0L/14T |
+| C240 vs ckpt3 | 20W/0L/20T |
+| iter235 vs ckpt3 | 22W/0L/18T |
+| D240 vs ckpt0 | 36W/0L/4T |
+| C240 vs ckpt0 | 38W/0L/2T |
+D1 = +0,150 (>0) | derrotas 0<=0 | D0 = -0,050 (>= -0,05, no limite) |
+Dref = +0,100 → DECISAO pre-registrada: CONTINUAR (gate exploratorio de
+custo; NAO confirma H-sync). Persistido em h3sync_probe_decision.txt.
+
+policy-verifier (post-result D1 + preflight D2): APROVADO COM RESSALVAS.
+Condicoes adotadas antes do lancamento do D2:
+- restore descartavel do D240 com refs externas (validador generalizado):
+  RESTORE_VALIDATION_OK iteration=240, blue==pkl D240 e yellow==blue iter235
+  bit-exato (h3sync_D240_restore_validation.log);
+- gates hierarquicos do endpoint codificados em
+  scripts/analyze_h3sync_endpoint.py: (1) causal D260-C260 vs ckpt3 com IC t
+  pareado 95% (t79=1,9905) LB>0, fail-closed em seed ausente/duplicado/
+  metadata; so se passar, (2) promocao cumulativa D260-iter235 LB>0 E ponto
+  vs ckpt0 >= -0,05 E derrotas adicionais vs ckpt0 <= 1;
+- desvio registrado: gate de hash da yellow substituido por igualdade
+  bit-exata de conteudo (re-serializacao do RLlib muda o pkl);
+- "Sync suprimido" NAO e falha (comportamento correto do freeze se score>0,6);
+- manifesto D2 persistido (h3sync_runD2_preflight_manifest.txt) com commit,
+  image ID, launcher integral e hashes; preflight de recursos 10,21/10,19 GB
+  PASSA; watchdog com CID no cabecalho do log.
+
+Run D2 lancado 19:57 (container h3_runD2, restore D240, stop 10.015.200 =
+iter260, FREEZE_OPPONENT=1). Gate de restore: iter241, ts 9.283.320.

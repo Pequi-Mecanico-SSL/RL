@@ -1,0 +1,8 @@
+D240 vs ckpt3: 26W/0L/14T
+C240 vs ckpt3: 20W/0L/20T
+iter235 vs ckpt3: 22W/0L/18T
+D240 vs ckpt0: 36W/0L/4T
+C240 vs ckpt0: 38W/0L/2T
+D1 (D240-C240 vs ckpt3): +0.150 | D0 (vs ckpt0): -0.050 | Dref (D240-iter235 vs ckpt3): +0.100
+derrotas D240: 0 | derrotas C240: 0
+DECISAO: CONTINUAR

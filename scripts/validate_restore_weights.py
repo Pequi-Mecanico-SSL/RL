@@ -4,7 +4,10 @@ Constroi o Algorithm PPO identico ao RL_train.py (0 workers, CPU), restaura o
 checkpoint e prova, ANTES de qualquer train(), que os pesos efetivamente
 carregados de policy_yellow == policy_blue tensor a tensor.
 
-Uso: python scripts/validate_restore_weights.py <config.yaml> <checkpoint>
+Uso: python scripts/validate_restore_weights.py <config.yaml> <checkpoint> \
+         [ref_blue.pkl] [ref_yellow.pkl]
+Sem refs: exige yellow==blue (checkpoint cirurgico). Com refs: compara cada
+policy carregada bit a bit contra o pkl de referencia dado.
 """
 import sys
 
@@ -12,6 +15,7 @@ import numpy as np
 import yaml
 
 import ray
+from ray import cloudpickle
 from ray.rllib.algorithms.ppo import PPO
 from ray.rllib.models import ModelCatalog
 from ray import tune
@@ -77,6 +81,27 @@ def main():
     it = algo.iteration
     w = algo.get_weights(["policy_blue", "policy_yellow"])
     blue, yellow = w["policy_blue"], w["policy_yellow"]
+    if len(sys.argv) > 4:
+        ref_b = cloudpickle.load(open(sys.argv[3], "rb"))["weights"]
+        ref_y = cloudpickle.load(open(sys.argv[4], "rb"))["weights"]
+        n_params = 0
+        for loaded, ref, nm in ((blue, ref_b, "blue"), (yellow, ref_y, "yellow")):
+            vals_l = [np.asarray(v) for _, v in sorted(loaded.items())]
+            vals_r = [np.asarray(v) for _, v in sorted(ref.items())]
+            assert len(vals_l) == len(vals_r), f"{nm}: nro de tensores difere"
+            for a, b in zip(vals_l, vals_r):
+                if not np.array_equal(a, b):
+                    raise SystemExit(f"FALHA: {nm} carregada != referencia")
+                if not np.isfinite(a).all():
+                    raise SystemExit(f"FALHA: NaN/Inf em {nm}")
+                n_params += a.size
+        l2 = float(np.sqrt(sum((np.asarray(v) ** 2).sum() for v in blue.values())))
+        print(
+            f"RESTORE_VALIDATION_OK iteration={it} params_total={n_params} "
+            f"blue_l2={l2:.4f} blue==ref_blue e yellow==ref_yellow bit-exato"
+        )
+        algo.stop()
+        return
     keys_b = sorted(blue)
     keys_y = sorted(yellow)
     n_equal = n_params = 0
