@@ -702,3 +702,38 @@ discrimina corretamente transiente de leak.
 Avaliacao final H1 em andamento (container h1_eval, CPU-only): iter235 blue
 deterministic vs ckpt3 e ckpt0 (yellow sample), 80 seeds fixos 0..79.
 Baselines iter210: 35W/1L/44T vs ckpt3; 46W/0L/34T vs ckpt0.
+
+### 2026-08-15 14:4x — H1 ACEITA: iter235 supera iter210 neste protocolo
+
+Avaliacao final (80 seeds fixos 0..79, blue deterministic, yellow sample,
+harness scripts/evaluate_checkpoints_cpu.py, container historico CPU-only):
+
+| confronto | iter210 (baseline) | iter235 (candidato) |
+|---|---|---|
+| vs ckpt3 | 35W/1L/44T | 49W/0L/31T |
+| vs ckpt0 | 46W/0L/34T | 73W/0L/7T |
+
+- Pareado vs ckpt3: +0,188, IC95% [+0,031, +0,344] (t79: LB +0,029) > 0 → ACEITE.
+- Pareado vs ckpt0: +0,338, IC95% [+0,212, +0,463] → LB >= 0 → gate nao-regressao PASSA.
+- vs ckpt3: 29 melhorias, 14 regressoes, 37 inalterados por seed.
+
+policy-verifier (post-result): APROVADO COM RESSALVAS. H1 ACEITA com conclusao
+restrita: "iter235 supera iter210 neste protocolo, para esta unica seed de
+treino". iter235 promovido a referencia OFFLINE da campanha (ponto de partida
+de H3/extensoes); NAO aprovado para deploy grSim ainda.
+
+Condicoes cumpridas:
+- Manifesto imutavel: experiment_results/h1_iter235_manifest_sha256.txt
+  (SHA-256 de policy_state.pkl blue/yellow, algorithm_state, params.json,
+  harness e dos 4 JSONL; policy_blue iter235 = c88b8174...).
+- Baseline filtrado explicito: crossplay_iter210_vs_ckpt3_bdet_ysample_filtered.jsonl
+  (80 registros deterministic/yellow-stochastic extraidos do arquivo de 160).
+- iter210 e JSONL originais preservados sem sobrescrita.
+
+Ressalvas registradas: pareamento nao e replay identico do oponente (yellow
+stochastic depende do estado induzido pelo blue); 1 training seed; retornos
+brutos nao comparaveis sem normalizacao por steps.
+
+Pendencias para o gate grSim do iter235 (rodada propria): export de inferencia,
+paridade treino vs standalone (strict, mean), gate cartesiano de comandos,
+ativacao gradual com modo deterministic (decisao H2), watchdogs de frescor.
