@@ -556,3 +556,27 @@ H1 desenho (conforme debate): run A = restore iter210, stop 8.397.360
 (8 iteracoes, ate iter218); gate de memoria estavel; run B = retomar do
 checkpoint_at_end ate 9.052.200 (iter235). Avaliacao primaria SO na iter235:
 blue deterministic vs ckpt3 yellow sample, 20 seeds triagem → 80 pareados.
+
+### 2026-08-15 — Condicoes do policy-verifier cumpridas (pre-run A)
+
+Parecer do verificador sobre H0: INCONCLUSIVO (faltavam artefatos persistidos);
+plano H1: REPROVADO com correcoes baratas. Todas atendidas:
+1. Validacao H0 persistida: experiment_results/h0_iter211_checkpoint_validation.json
+   (iter211, counters exatos, 16 tensores/531.709 params por policy,
+   optimizer blue 32 tensores finitos).
+2. Delta tensor-a-tensor iter210→211 persistido em
+   experiment_results/h0_iter211_weight_delta.json: blue l2_delta=2,688
+   (rel 4,37%, max_abs 0,0552 na value branch, 531.709/531.709 elementos
+   mudaram, finito); yellow delta=0 exato (score 0,1 nao disparou sync,
+   como esperado). Update real e sadio → H0 ACEITO.
+3. Manifesto de ambiente: experiment_results/h0_environment_manifest.txt
+   (rewards sha256 9379...7ced, imagem sha256:3a94c6cf..., rSoccer c684c2b).
+4. Baseline ckpt0 no protocolo final (blue det, yellow sample, 80 seeds
+   0..79): 46W/0L/34T, gols 46x0
+   (experiment_results/crossplay_iter210_vs_ckpt0_bdet_ysample.jsonl).
+5. Gate de memoria quantitativo para run A: pico de cada uma das 4 ultimas
+   iteracoes <= 6,5 GiB, amplitude <= 0,5 GiB, tendencia <= 0,1 GiB/iteracao.
+6. Sem optional stopping: avaliacao final SEMPRE com os 80 seeds fixos 0..79.
+7. Gate ckpt0: diferenca pareada candidato−iter210 com IC95% LB >= 0.
+8. Conclusao restrita a "iter235 supera iter210 neste protocolo" (1 training
+   seed; sem alegacao de monotonicidade).

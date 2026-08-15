@@ -1,0 +1,20 @@
+{
+  "policy_blue": {
+    "l2_delta": 2.68808488851537,
+    "rel_delta": 0.043741337555586096,
+    "max_abs_delta": 0.05522558093070984,
+    "max_delta_tensor": "_value_branch_separate.0._model.0.weight",
+    "changed_elements": 531709,
+    "total_elements": 531709,
+    "finite": true
+  },
+  "policy_yellow": {
+    "l2_delta": 0.0,
+    "rel_delta": 0.0,
+    "max_abs_delta": 0.0,
+    "max_delta_tensor": null,
+    "changed_elements": 0,
+    "total_elements": 531709,
+    "finite": true
+  }
+}
