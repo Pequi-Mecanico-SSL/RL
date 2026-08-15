@@ -659,3 +659,28 @@ Correcao: scripts/watchdog_host_memory.sh agora computa
 CONT = memory.current - inactive_file (paridade com docker stats); limites
 inalterados (host < 2,5 GB ou container >= 6,5 GiB). Run B relancado 12:27
 com preflight aprovado (10,78/10,80 GB, 0 CUDA apps).
+
+### 2026-08-15 13:0x — Run B tentativa 2 abortada (transiente real); emenda do gate
+
+Tentativa 2 (metrica correta): iteracoes 219..221 limpas (this_iter=38.520,
+41/42/41 episodios, 0 restarts, reward medio -898 na iter221), mas o watchdog
+abortou aos 19,5 min: container saltou 4,0 -> 6,70 GiB entre duas amostras de
+1 s na fronteira da iter222. Diagnostico: transiente NORMAL do train step —
+o run A valido ja atingira 6,778 GiB de pico global. Gate instantaneo de
+6,5 GiB refutado como discriminador.
+
+policy-verifier (emenda): APROVADO COM RESSALVAS. Parametros finais:
+- host: abort imediato se MemAvailable < 2,5 GB (inalterado);
+- container: abort somente se cont >= 6,5 GiB SUSTENTADO por >= 4,0 s;
+- poll nominal 0,5 s; metrica memory.current - inactive_file;
+- cap 7g + swap 7g + shm 1536m inalterados; fail-fast interno permanece.
+Rejeitadas: elevar limiar para 6,95 GiB (perto demais do cap) e remover o
+gate (perderia deteccao de leak sustentado).
+Quarentena: iteracoes 219..221 e checkpoint_000000 da tentativa 2
+(h1_runB_iter235_aborted_transient) — consistentes, mas descartados por
+comparabilidade; restart limpo do iter218 validado.
+Teste discriminante da emenda: na 1a fronteira de iteracao acima de 6,5 GiB,
+a memoria deve voltar abaixo do limiar em < 4,0 s sem OOM/worker morto.
+
+Tentativa 3 lancada (preflight 10,86/10,86 GB, 0 CUDA apps, disco 37,2 GB),
+watchdog emendado em scripts/watchdog_host_memory.sh.
