@@ -614,3 +614,32 @@ apps CUDA, VRAM livre 11.263 MiB, disco 36,8 GB. Monitor externo de 1 s ativo
 em training_runs/h1_runA/monitor.log. Run A lancado 11:34 com a receita
 canonica (restore iter210, stop 8.397.360 = iter218). Checagem inicial:
 container 3,7-4,3 GiB, host 4,4-4,7 GB livres — dentro do envelope do smoke.
+
+### 2026-08-15 12:19 — Run A concluido; parecer post-result; run B lancado
+
+Run A TERMINATED (EXIT=0): 8 iteracoes 211..218 exatas (this_iter=38.520,
+episodios 35..44, 1 worker, 0 restarts/faulty), ts final 8.397.360.
+Checkpoint iter218 validado e PERSISTIDO em
+experiment_results/h1_iter218_checkpoint_validation.json: counters exatos
+(env 8.397.360, agent 50.384.160 = 6x), blue l2 61,9916 (progrediu de
+61,4541), yellow l2 60,9397 = iter210 (sem sync, esperado), optimizer 32
+tensores finitos.
+
+Gate de memoria: com janelas alinhadas as iteracoes reais (auditoria do
+verificador), picos 215..218 = [6,515; 6,326; 6,380; 6,291] GiB — amplitude
+0,224 e tendencia -0,062 GiB/iter PASSAM; teto de 6,5 falhou por 15 MiB na
+iter215; pico global 6,778 GiB (96,8% do cap); MemAvailable do host tocou
+2,04 GB sem abort automatico (falha operacional reconhecida).
+
+policy-verifier: APROVADO COM RESSALVAS. iter218 elegivel para restore APOS
+persistir validacao (feito). Run B autorizado com a MESMA receita, mas com
+watchdog ATIVO obrigatorio: abort automatico se MemAvailable < 2,5 GB ou
+container >= 6,5 GiB, amostragem 1 s (scripts/watchdog_host_memory.sh).
+Qualquer aborto poe em quarentena apenas o trecho pos-iter218.
+
+DGX considerada e descartada nesta janela (sobrecarregada por outros
+usuarios); campanha segue no host local.
+
+Run B lancado 12:18 (preflight: MemAvailable 10,74/10,73 GB, 0 CUDA apps,
+VRAM 11.544 MiB, disco 37,2 GB): restore iter218, stop 9.052.200 (iter235),
+container --name h1_runB, watchdog em training_runs/h1_runB/watchdog.log.
