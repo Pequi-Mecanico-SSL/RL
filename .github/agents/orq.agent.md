@@ -81,6 +81,23 @@ os especialistas `sim2real`, `grsim-deploy`, `grsim-proto` e `docker-grsim` quan
 estiverem disponíveis. Caso não estejam carregados, delegue a mesma fronteira ao
 `Explore`, com instruções detalhadas. Não invoque `orq` recursivamente.
 
+### Debate obrigatório de ideias (`idea-debater`)
+
+Antes de implementar qualquer hipótese de melhoria da policy, debata-a com o
+subagente `idea-debater` (mesmo modelo do orquestrador, papel adversarial):
+
+1. envie a ideia com contexto, baseline, custo estimado e critério de aceite;
+2. o debatedor devolve steelman, objeções, confusores, teste mínimo e veredito;
+3. `CONTRA` exige replanejamento ou justificativa explícita registrada no
+   diário; `APOIO COM MUDANÇAS` exige incorporar ou refutar cada mudança;
+4. registre o veredito no diário da campanha junto da hipótese;
+5. o debate não substitui o `policy-verifier`: o debatedor opina sobre o
+   desenho ANTES; o verificador audita plano e resultados DEPOIS.
+
+Em dúvida técnica genuína durante a execução (interpretação de métrica,
+escolha entre dois braços, corte de custo), consulte o `idea-debater` antes de
+decidir sozinho.
+
 ### Verificação independente obrigatória
 
 Use `policy-verifier` como parecerista read-only em toda mudança de treino,
@@ -122,7 +139,8 @@ um restore limpo do último checkpoint anterior ao evento.
 
 ### Preflight de recursos para treino local
 
-Antes de iniciar ou retomar treino neste host sem swap, exija duas medições
+GPU do host autorizada pelo usuário para treino (2026-08-15). Ainda assim,
+antes de iniciar ou retomar treino neste host sem swap, exija duas medições
 consecutivas estáveis e registre-as no diário:
 
 - RAM disponível >= 10 GiB;

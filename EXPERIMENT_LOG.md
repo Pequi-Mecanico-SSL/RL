@@ -349,3 +349,53 @@ Fatos de contrato verificados no merge:
   container a partir deste diretorio (-w /campaign).
 - deploy_policy.py corrigido: load_state_dict agora usa strict=True (o
   entrypoint validado deploy_policy_grsim.py ja usava strict=True).
+
+---
+
+# Campanha 2 — melhoria metodologica da policy (2026-08-15)
+
+Autorizacoes do usuario: GPU do host liberada para treino; trabalho autonomo;
+nao rodar treinos inteiros — apenas o necessario para validar cada ideia.
+
+## Protocolo desta campanha
+
+1. **Uma variavel por braco.** Cada experimento muda exatamente uma coisa em
+   relacao ao braco de controle e declara hipotese, predicao, custo, metrica
+   primaria e criterios de aceite E de rejeicao ANTES de rodar.
+2. **Debate previo obrigatorio.** Toda hipotese passa pelo subagente
+   `idea-debater` (segunda opiniao adversarial, mesmo modelo); veredito
+   registrado aqui. `policy-verifier` audita plano e resultados.
+3. **Metrica primaria: cross-play.** 20 episodios do candidato (blue) contra
+   pool fixo de yellow (ckpt0 e ckpt3 do baseline) + espelho. Reportar gols
+   pro/contra e timeouts. Reward bruto nao seleciona sozinho.
+4. **Probes curtos.** Bracos de treino usam 25 iteracoes (~963.000 env steps,
+   1 checkpoint em freq 25) antes de qualquer extensao. Extensao so com
+   melhora na metrica primaria.
+5. **Contrato fixo.** Observacao (77x8), acao (4 Beta), arquitetura
+   (300/200/100) e rSoccer@c684c2b nao mudam nesta campanha; mudancas de
+   contrato reabrem gates de paridade grSim e ficam para campanha propria.
+   Treino sempre monta rewards.py e observations.py de e945e9a (ver
+   consolidacao acima).
+6. **Gates operacionais.** Preflight de recursos (2 medicoes), watchdog
+   fail-fast ativo, restore exclusivo de checkpoint validado, quarentena
+   imediata em OOM/worker morto.
+
+## Backlog de hipoteses (a debater)
+
+- **H0 (infra, pre-requisito):** o pipeline fail-fast reproduz 1 iteracao
+  limpa a partir do iter210 (smoke iter211, aceite exato ja definido).
+- **H1 (subtreino):** o baseline parou cedo (~5,5% do orcamento); continuar
+  treino conservador melhora cross-play monotonicamente nos proximos
+  25-50 iteracoes. Predicao: saldo de gols sobe e timeouts caem vs iter210.
+- **H2 (inferencia, custo zero de treino):** com alphas medios ~1,6-2,3
+  (beta_ckpt3_30ep.json), a Beta e larga; `deterministic` (mean) pode ser
+  pior que `sample` no deploy. Escolher modo por avaliacao offline.
+- **H3 (entropy_coeff):** reduzir entropia afia a Beta tarde no treino e
+  converte posse em gol. Probe de 25 iteracoes vs controle H1.
+- **H4 (lr schedule):** decaimento de lr estabiliza a continuacao. So se H1
+  mostrar instabilidade.
+- **H5 (pesos de reward):** rebalancear 0.7/0.1/0.1/0.1 para reforcar
+  ataque. Mais arriscado (muda shaping, nao muda contrato de deploy);
+  somente apos H1/H3 esgotarem.
+
+## Diario da campanha 2
