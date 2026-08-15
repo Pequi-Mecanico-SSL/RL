@@ -607,3 +607,10 @@ Comando pronto (run A, 8 iteracoes ate iter218):
     --stop-timesteps 8397360 --experiment-name h1_runA_iter218
 Depois do run A: validar checkpoint iter218 + gates de memoria; run B =
 restore iter218, stop 9.052.200 (iter235); avaliacao final 80 seeds fixos.
+
+### 2026-08-15 11:33 — Run A DESBLOQUEADO e lançado
+Preflight repassou: MemAvailable 9,75/9,85 GB (2 medicoes, 20 s), 0 compute
+apps CUDA, VRAM livre 11.263 MiB, disco 36,8 GB. Monitor externo de 1 s ativo
+em training_runs/h1_runA/monitor.log. Run A lancado 11:34 com a receita
+canonica (restore iter210, stop 8.397.360 = iter218). Checagem inicial:
+container 3,7-4,3 GiB, host 4,4-4,7 GB livres — dentro do envelope do smoke.
