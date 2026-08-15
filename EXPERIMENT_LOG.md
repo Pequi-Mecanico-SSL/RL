@@ -475,3 +475,22 @@ Sinal inverte a intuicao inicial: blue deterministic > blue sample contra
 yellow sample. Extensao para 80 seeds pareados em andamento (aceite: IC95%
 da diferenca pareada). Nota: iter210 (10 iteracoes alem do ckpt3) vence
 ckpt3 por 10x0 em modo det — evidencia preliminar pro-H1.
+
+### 2026-08-15 — H2 CONCLUIDO: modo de inferencia (mean vs sample)
+
+80 seeds pareados, iter210 (blue) vs ckpt3 (yellow FIXA em sample):
+| blue | gols | W/L/T |
+|---|---|---|
+| deterministic | 35x1 | 35/1/44 |
+| sample | 16x7 | 16/7/57 |
+
+Diferenca pareada por seed (win=+1, timeout=0, loss=-1), det - sample:
+media +0,312, IC95% [+0,162, +0,463] — exclui zero com folga.
+
+DECISAO H2: modo `deterministic` (mean) e superior para inferencia/deploy
+desta policy e passa a ser o modo padrao de avaliacao do candidato (yellow
+permanece sample para nao degenerar o env deterministico). Recomendacao para
+o deploy grSim: migrar de `sample` para `deterministic` — isso reabre o gate
+de ativacao gradual do grSim (mudanca de modo), a validar em rodada propria.
+Confusores tratados: mesmos 80 seeds nos dois bracos, yellow fixa em modo
+unico, comparacao pareada.
