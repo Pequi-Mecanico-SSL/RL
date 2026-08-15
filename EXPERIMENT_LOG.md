@@ -580,3 +580,30 @@ plano H1: REPROVADO com correcoes baratas. Todas atendidas:
 7. Gate ckpt0: diferenca pareada candidato−iter210 com IC95% LB >= 0.
 8. Conclusao restrita a "iter235 supera iter210 neste protocolo" (1 training
    seed; sem alegacao de monotonicidade).
+
+### 2026-08-15 — Run A BLOQUEADO por preflight (veredito CONTRA do debate)
+
+Preflight do run A: MemAvailable 7,93/7,88 GB (< 9,5 GB). Debate concluiu
+CONTRA rodar agora: na janela do H0 o MemAvailable caiu de 9,35 para 2,95 GB
+com o container em apenas 4,29 GiB; partir de 7,9 GB deixaria o host ~1,4 GB.
+Aborto em 1,5 GB reage tarde (queda de 2,76 GiB entre amostras de 7 s) e
+reduzir o cap contaminaria H1 (mudaria o envelope operacional vs smoke).
+
+Condicoes de liberacao do run A (registradas para execucao):
+- MemAvailable >= 9.500.000.000 bytes em 2 medicoes separadas por 20 s;
+- zero compute apps CUDA; VRAM livre >= 10.240 MiB; disco >= 30 GB;
+- monitor externo com amostragem de 1 s;
+- abort se MemAvailable < 2.500.000.000 bytes OU container >= 6,5 GiB.
+
+Comando pronto (run A, 8 iteracoes ate iter218):
+  docker run --rm --gpus all --memory=7g --memory-swap=7g --shm-size=1536m \
+    -w /campaign -v $PWD:/campaign \
+    -v $PWD/training_runs/h1_runA/ray_results:/root/ray_results \
+    -v /tmp/contrato_hist/rewards.py:/campaign/rewards.py:ro \
+    -v /home/marcos/Documentos/RL-policy-improvement/rSoccer:/campaign/rSoccer:ro \
+    -e PYTHONPATH=/campaign:/campaign/rSoccer rl-policy-training:c684c2b \
+    python RL_train.py --config config.control-1w.yaml \
+    --restore /campaign/training_runs/control_lowmem_to226_ray_results/control_lowmem_to226/PPO_Soccer_286cf_00000_0_2026-08-03_18-35-53/checkpoint_000001 \
+    --stop-timesteps 8397360 --experiment-name h1_runA_iter218
+Depois do run A: validar checkpoint iter218 + gates de memoria; run B =
+restore iter218, stop 9.052.200 (iter235); avaliacao final 80 seeds fixos.
