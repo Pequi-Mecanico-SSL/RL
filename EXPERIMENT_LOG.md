@@ -494,3 +494,19 @@ o deploy grSim: migrar de `sample` para `deterministic` — isso reabre o gate
 de ativacao gradual do grSim (mudanca de modo), a validar em rodada propria.
 Confusores tratados: mesmos 80 seeds nos dois bracos, yellow fixa em modo
 unico, comparacao pareada.
+
+### 2026-08-15 — Debate: relaxamento do preflight (idea-debater)
+
+Veredito APOIO COM MUDANCAS para executar H0 agora:
+- gate `GPU utilization <= 10%` REMOVIDO (media atividade grafica do desktop,
+  nao concorrencia CUDA); substituido por: zero compute apps + VRAM livre
+  >= 10.240 MiB, utilizacao registrada como telemetria;
+- gate de RAM corrigido para bytes: aceite de H0 com MemAvailable
+  >= 9.500.000.000 bytes (relaxamento EXCLUSIVO do smoke; nao chamar de 10 GiB);
+- container de treino com --memory=7g --memory-swap=7g (protege o host de
+  verdade; cap de 12g nao protegeria com ~9 GiB disponiveis);
+- monitor externo amostrando MemAvailable, memoria do container e VRAM;
+- aceite H0 inalterado + pico do container < 6,5 GiB + zero eventos OOM;
+- H0 NAO autoriza H1: probe intermediario de 8 iteracoes obrigatorio antes
+  das 25 (o OOM anterior surgiu apos 6 iteracoes validas), aceite = pico de
+  memoria estavel nas ultimas 4 iteracoes com folga >= 0,5 GiB do cap.
