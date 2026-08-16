@@ -1,0 +1,11 @@
+# Manifesto pos-resultado endpoint D260 (H-sync, campanha 3) — 2026-08-15T21:46:16-03:00
+veredito: INCONCLUSIVO (gate causal LB<=0); promocao BLOQUEADA; campanha ENCERRADA por custo/futilidade
+formulacao oficial: H-sync nao confirmada; estimativas pontuais positivas neste run, compativeis tambem com efeito nulo ou negativo dentro da incerteza observada
+D260: candidato nao promovido; ponto-dominante nos comparadores observados; evidencia insuficiente de beneficio causal
+3a1df217355b06a06f5e9fb800fe9ddfb3b6fdce4d7d6fe840631cdee01b4182  training_runs/h3_sync/runD2/ray_results/h3_runD2_iter260/PPO_Soccer_adf3c_00000_0_2026-08-15_22-57-24/checkpoint_000003/policies/policy_blue/policy_state.pkl
+80f46b90c8c10c52e7890e907dc69163ba843e197277b13bf407c4fb94e7bf3b  training_runs/h3_sync/runD2/ray_results/h3_runD2_iter260/PPO_Soccer_adf3c_00000_0_2026-08-15_22-57-24/checkpoint_000003/policies/policy_yellow/policy_state.pkl
+f9f701281f94e0fb05d96e3389de7e548833f0060975e05af5b6393a0b8ff17c  training_runs/h3_sync/runD2/ray_results/h3_runD2_iter260/PPO_Soccer_adf3c_00000_0_2026-08-15_22-57-24/checkpoint_000003/algorithm_state.pkl
+1dc2aa5de2145bfde4a1783404dbb99cbca3283d49d4c3bd20f937e5f69f6074  experiment_results/h3sync_D260_vs_ckpt3_s0.jsonl
+ae548e84e65d4bdc3109513a4be628468ae3bb609d7abe141bc480b6ba1e9702  experiment_results/h3sync_D260_vs_ckpt0_s0.jsonl
+e77919101edb16f5515209c512808937d96124c13be3a61799bee1e4a3a51a81  experiment_results/h3sync_endpoint_decision.txt
+32d6f8e685d247a5086d86fed75408780106857b8402f9e13f5d5005ca9a7215  scripts/analyze_h3sync_endpoint.py

@@ -1,0 +1,28 @@
+{
+  "checkpoint": "training_runs/h3_sync/runD2/ray_results/h3_runD2_iter260/PPO_Soccer_adf3c_00000_0_2026-08-15_22-57-24/checkpoint_000003",
+  "counters": {
+    "num_agent_steps_sampled": 60091200,
+    "num_agent_steps_trained": 60091200,
+    "num_env_steps_sampled": 10015200,
+    "num_env_steps_trained": 10015200
+  },
+  "policies": {
+    "policy_blue": {
+      "l2_norm": 63.73504459332314,
+      "max_abs": 1.772143840789795,
+      "optimizer_parameters": 1063418,
+      "optimizer_tensors": 32,
+      "parameters": 531709,
+      "tensors": 16
+    },
+    "policy_yellow": {
+      "l2_norm": 62.86767129897389,
+      "max_abs": 1.7460554838180542,
+      "optimizer_parameters": 0,
+      "optimizer_tensors": 0,
+      "parameters": 531709,
+      "tensors": 16
+    }
+  },
+  "training_iteration": 260
+}

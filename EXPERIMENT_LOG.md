@@ -1006,3 +1006,50 @@ Condicoes adotadas antes do lancamento do D2:
 
 Run D2 lancado 19:57 (container h3_runD2, restore D240, stop 10.015.200 =
 iter260, FREEZE_OPPONENT=1). Gate de restore: iter241, ts 9.283.320.
+
+### 2026-08-15 21:40 — Endpoint D260: INCONCLUSIVO; campanha 3 ENCERRADA
+
+Run D2: EXIT=0, 20 iteracoes 241..260 exatas, 0 aborts, ZERO syncs; D260
+validado (env 10.015.200, agent 60.091.200, blue l2 63,7350, yellow congelada
+bit-exata 16/16; h3sync_D260_checkpoint_validation.json e
+h3sync_D260_yellow_frozen_check.txt).
+
+Endpoint (80 seeds holdout 0..79, blue det, yellow sample):
+| confronto | W/L/T |
+|---|---|
+| D260 vs ckpt3 | 54W/0L/26T |
+| C260 vs ckpt3 | 51W/0L/29T |
+| iter235 vs ckpt3 | 49W/0L/31T |
+| D260 vs ckpt0 | 74W/0L/6T |
+| iter235 vs ckpt0 | 73W/0L/7T |
+GATE 1 causal (D260-C260 vs ckpt3): +0,0375 IC95% [-0,1104,+0,1854] → LB<=0
+→ hierarquia PARA → INCONCLUSIVO (ponto >0, nao REJEITADO). Info:
+D260-iter235 vs ckpt3 +0,0625 [-0,0892,+0,2142].
+
+policy-verifier (post-result): APROVADO COM RESSALVAS. Condicoes adotadas:
+- D260 registrado como "candidato nao promovido; ponto-dominante nos
+  comparadores observados; evidencia insuficiente de beneficio causal";
+- formulacao oficial: "H-sync NAO confirmada; estimativas pontuais positivas
+  neste run, compativeis tambem com efeito nulo ou negativo dentro da
+  incerteza observada" (1 seed de treino; C e D confundem hipotese com
+  variabilidade de trajetoria; D1=+0,150 selecionou a continuacao, nao e
+  confirmacao independente);
+- iter235 PERMANECE referencia offline e checkpoint operacional grSim;
+- D260 (blue 3a1df217...) e D240 preservados APENAS como candidatos
+  exploratorios/membros de pool (sem status de referencia/deploy);
+- manifesto pos-resultado com SHA-256 completos persistido
+  (h3sync_endpoint_postresult_manifest.txt);
+- encerramento por CUSTO/FUTILIDADE, nao rejeicao de H-sync;
+- reabertura causal exigiria pares C/D em MULTIPLAS seeds de treino
+  pre-fixadas (prolongar so D muda o estimando e nao resolve o confusor).
+
+## Encerramento da campanha 3
+
+- H-sync nao confirmada (sem rejeicao); ganho pontual consistente mas sem
+  significancia causal na resolucao deste desenho (meia-largura ~0,15).
+- Melhor politica OPERACIONAL: iter235 (inalterada).
+- Melhor politica PONTUAL observada: D260 (54W/74W, 0 derrotas) — nao
+  promovida; disponivel para pool de avaliacao de campanhas futuras.
+- Backlog atualizado: self-play real com regra de sync explicita permanece a
+  hipotese estrutural candidata; novo pre-registro deve exigir replicacao
+  por seeds de treino e pool ampliado (ckpt0, ckpt3, iter235, D240, D260).

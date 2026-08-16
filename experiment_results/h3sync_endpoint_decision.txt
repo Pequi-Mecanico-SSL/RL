@@ -1,0 +1,8 @@
+D260 vs ckpt3: 54W/0L/26T
+D260 vs ckpt0: 74W/0L/6T
+C260 vs ckpt3: 51W/0L/29T
+iter235 vs ckpt3: 49W/0L/31T
+iter235 vs ckpt0: 73W/0L/7T
+GATE 1 causal D260-C260 vs ckpt3: +0.0375 IC95% [-0.1104,+0.1854] LB>0: False
+(info) D260-iter235 vs ckpt3: +0.0625 [-0.0892,+0.2142]
+VEREDITO: INCONCLUSIVO (gate causal nao passou; hierarquia para aqui)
