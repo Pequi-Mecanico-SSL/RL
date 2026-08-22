@@ -24,7 +24,7 @@ RUN apt-get update && \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install torch --index-url https://download.pytorch.org/whl/cu118
+RUN pip install torch --index-url https://download.pytorch.org/whl/cu118 --extra-index-url https://pypi.org/simple
 
 # Copie o arquivo requirements.txt para o contêiner
 COPY requirements.txt .

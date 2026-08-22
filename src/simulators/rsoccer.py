@@ -27,6 +27,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         sparse_rewards = {},
         possession_radius_scale=3,
         direction_change_threshold=1,
+        end_on_offense=True,
         **kwargs
     ):
 
@@ -120,6 +121,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             direction_change_threshold=direction_change_threshold
         )
 
+        self.end_on_offense = end_on_offense
+
     def _get_commands(self, actions):
         commands = []
         for i in range(self.n_robots_blue):
@@ -166,6 +169,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             robot = getattr(frame, f"robots_{color}")[idx] 
             getattr(frame, f"robots_{color}")[idx] = SimRobot(
                 yellow= not is_blue,
+                id=idx,
                 x=robot.x, 
                 y=robot.y, 
                 theta=robot.theta,
@@ -188,6 +192,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
     def convert_sim_frame_to_frame(self, sim_frame) -> Frame:
         # Convert frame from simulator format to our format if needed
         robots_blue = {i: Robot(
+            yellow=False,
+            id=i,
             x=sim_frame.robots_blue[i].x, 
             y=sim_frame.robots_blue[i].y, 
             theta=sim_frame.robots_blue[i].theta,
@@ -196,6 +202,8 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             v_theta=sim_frame.robots_blue[i].v_theta
         ) for i in range(self.n_robots_blue)}
         robots_yellow = {i: Robot(
+            yellow=True,
+            id=i,
             x=sim_frame.robots_yellow[i].x, 
             y=sim_frame.robots_yellow[i].y, 
             theta=sim_frame.robots_yellow[i].theta,
@@ -353,12 +361,11 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         double_touch = False
         for robot_name, offenses in self.judge_info["offenses"].items():
             if len(offenses) == 0: continue
-            reward_agents[robot_name] = 0
             for offense in offenses:
                 if offense == "DOUBLE_TOUCH":
                     double_touch = True
                 elif offense in ["OPPONENT_DEFENSE_AREA", "TEAM_DEFENSE_AREA"]:
-                    done = {'__all__': True} # Analise if it should be done or not
+                    done = {'__all__': True and self.end_on_offense} # Analise if it should be done or not
                 reward_agents[robot_name] += self.sparse_rewards.get(offense, 0)
 
         # if double_touch:
@@ -387,7 +394,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
             possession_radius_scale=self.possession_radius_scale, 
             direction_change_threshold=self.direction_change_threshold
         )
-        init_frame = self.judge._get_initial_positions_frame("kickoff")
+        init_frame = self.judge._get_initial_positions_frame(None)#"kickoff")
         self.rsim.reset(self.convert_frame_to_sim_frame(init_frame))
 
         # Get frame from simulator

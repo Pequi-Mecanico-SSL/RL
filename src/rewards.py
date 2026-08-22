@@ -343,20 +343,60 @@ def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
     return reward
 
+
+def r_kicker_to_ball(field: dict, frame: dict, last_frame: dict, **kwargs):
+    # Cosine similarity between robot heading and robot->ball vector.
+    # This is naturally bounded in [-1, 1] and rewards facing the ball.
+    left_robots = [
+        frame[k] for k in sorted(frame.keys())
+        if k.startswith(f"{kwargs['left']}_")
+    ]
+    right_robots = [
+        frame[k] for k in sorted(frame.keys())
+        if k.startswith(f"{kwargs['right']}_")
+    ]
+    ball = frame["ball"]
+
+    def _alignment(robot):
+        theta = np.deg2rad(robot["theta"])
+        heading = np.array([np.cos(theta), np.sin(theta)], dtype=np.float64)
+
+        to_ball = np.array([
+            ball["x"] - robot["x"],
+            ball["y"] - robot["y"],
+        ], dtype=np.float64)
+        dist = np.linalg.norm(to_ball)
+
+        if dist < 1e-8:
+            return 1.0
+
+        to_ball_unit = to_ball / dist
+        return float(np.clip(np.dot(heading, to_ball_unit), -1.0, 1.0))
+
+    reward = {
+        **{f"{kwargs['left']}_{idx}": _alignment(left_robots[idx]) for idx in range(len(left_robots))},
+        **{f"{kwargs['right']}_{idx}": _alignment(right_robots[idx]) for idx in range(len(right_robots))},
+    }
+
+    return reward
+
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
-    (0.6, r_speed, ["kick_speed_x", "fps"]),
+    (0.7, r_speed, ["kick_speed_x", "fps"]),
     (0.1, r_dist,  []),
-    (0.05, r_off,   []),
-    (0.05, r_def,   []),
-    (0.2, r_collision, []),
+    (0.1, r_off,   []),
+    (0.1, r_def,   [])
+    #(0.05, r_kicker_to_ball, []),
+    #(0.05, r_collision, []),
     #(0.3, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
     #(0.6, r_wheel,   []),
 ]
 
 SPARSE_REWARDS = {
     "GOAL_REWARD": 1000, # robot that scored gets this reward and the other team gets negative this reward
-    "OUTSIDE_REWARD": -10, # the team of the last robot that touched the ball gets this reward
-    "OPPONENT_DEFENSE_AREA": -1000,
-    "TEAM_DEFENSE_AREA": -1000
+    "OUTSIDE_REWARD": 0, # the team of the last robot that touched the ball gets this reward
+    "OPPONENT_DEFENSE_AREA": 0,
+    "TEAM_DEFENSE_AREA": -100,
+    "COLLISION": 0,
+    "DOUBLE_TOUCH":0#-1000
 }

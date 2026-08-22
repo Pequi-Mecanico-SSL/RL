@@ -22,7 +22,7 @@ class Judge():
         self.left = left
 
         self.init_pos = InitialPosition(**init_pos)
-        self.frame = self._get_initial_positions_frame("kickoff")
+        self.frame = self._get_initial_positions_frame(None)
         self.historical_ball_positions = set()
         self.is_kickoff = kickoff
         self.debug_initial_pos = os.getenv("JUDGE_DEBUG_INIT_POS", "0") == "1"
@@ -291,13 +291,13 @@ class Judge():
 
         field_half_length = self.field.length / 2
         field_half_width = self.field.width / 2
-        positions = []
         frame = Frame()
 
         frame.ball = Ball(*(robot_pos.ball if robot_pos.ball else [
             random(-field_half_length + 0.1, field_half_length - 0.1), 
             random(-field_half_width + 0.1, field_half_width - 0.1)
         ]))
+        positions = [[frame.ball.x, frame.ball.y]]
 
         min_dist = 0.2
         for i in range(self.n_robots_blue + self.n_robots_yellow):
@@ -306,15 +306,14 @@ class Judge():
             color = "blue" if is_blue else "yellow"
             color_positions = getattr(robot_pos, color, {}) or {}
             # Config files use 1-based keys, but keep a fallback to 0-based.
-            pos = color_positions.get(idx + 1)
+            pos = color_positions.get(idx+1)
             if pos is None:
                 pos = color_positions.get(idx)
-
-            if pos is None and self.debug_initial_pos:
-                print(
-                    f"[Judge] Missing initial pose for {color}_{idx}. "
-                    f"Available keys: {sorted(list(color_positions.keys()))}"
-                )
+            # if pos is None and self.debug_initial_pos:
+            #     print(
+            #         f"[Judge] Missing initial pose for {color}_{idx}. "
+            #         f"Available keys: {sorted(list(color_positions.keys()))}"
+            #     )
 
             x, y, theta = pos if pos else [
                 random(-field_half_length + 0.1, field_half_length - 0.1), 
@@ -331,8 +330,14 @@ class Judge():
                 if not places: break
             positions.append([x, y])
             robot_list = getattr(frame, f"robots_{color}")
-            robot_list[idx] = Robot(x=x, y=y, theta=theta)
-        
+            robot_list[idx] = Robot(yellow=(color == "yellow"), id=idx, x=x, y=y, theta=theta)
+
+        self.init_pos = InitialPosition(
+            blue={idx+1: [robot.x, robot.y, robot.theta] for idx, robot in frame.robots_blue.items()},
+            yellow={idx+1: [robot.x, robot.y, robot.theta] for idx, robot in frame.robots_yellow.items()},
+            ball=[frame.ball.x, frame.ball.y]
+        )
+
         return frame
 
     def _get_initial_positions_frame(self, stage, ball_pos=None, team_freekick=None):
@@ -342,14 +347,19 @@ class Judge():
             frame = self._get_frame(robot_pos=self.init_pos)
 
             team_last_touch =  ( self.last_touch or "" ).split("_")[0]
+            _mapper = {"blue": "yellow", "yellow": "blue"}
             kickoff_team = np.random.choice(["blue", "yellow"])
             if team_last_touch == "yellow":
                 kickoff_team = "blue"
             elif team_last_touch == "blue":
                 kickoff_team = "yellow"
 
+
             robots_list = getattr(frame, f"robots_{kickoff_team}")
+            robots_list = robots_list if robots_list else getattr(frame, f"robots_{_mapper[kickoff_team]}")
             robots_list[0] = Robot(
+                yellow=(kickoff_team == "yellow"),
+                id=0,
                 x= 0.2 * -(robots_list[0].x / abs(robots_list[0].x)), 
                 y= 0.0, 
                 theta= robots_list[0].theta + 180.0
@@ -368,11 +378,14 @@ class Judge():
             dx = np.random.uniform(0, r) if team_freekick == "yellow" else np.random.uniform(-r, 0)
             dy = f(dx) if ball_pos[1] > 0 else -f(dx)
             robots_list[0] = Robot(
+                yellow=(team_freekick == "yellow"),
+                id=0,
                 x= ball_pos[0] + dx, 
                 y= ball_pos[1] + dy, 
                 theta= np.random.uniform(0, 360)
             )
-
+        else:
+            frame = self._get_frame(robot_pos=self.init_pos)
         return frame
 
         

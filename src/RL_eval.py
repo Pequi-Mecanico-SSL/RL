@@ -22,8 +22,8 @@ import debugpy
 
 ray.init()
 
-CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_516cb_00000_0_2026-06-06_18-12-45/checkpoint_000011"
-CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_516cb_00000_0_2026-06-06_18-12-45/checkpoint_000011"
+CHECKPOINT_PATH_BLUE = "/root/ray_results/PPO_selfplay_rec/PPO_Soccer_3b82b_00000_0_2026-08-20_12-04-01/checkpoint_000001"
+CHECKPOINT_PATH_YELLOW ="/root/ray_results/PPO_selfplay_rec/PPO_Soccer_3b82b_00000_0_2026-08-20_12-04-01/checkpoint_000001"
 NUM_EPS = 100
 
 def create_rllib_env(config):
@@ -93,7 +93,7 @@ agents.set_weights({
 })
 
 
-configs["env_config"]["match_time"] = 40
+configs["env_config"]["match_time"] = 20
 configs["env_config"]["dense_rewards"] = DENSE_REWARDS
 configs["env_config"]["sparse_rewards"] = SPARSE_REWARDS
 env = create_rllib_env(configs["env_config"].copy())

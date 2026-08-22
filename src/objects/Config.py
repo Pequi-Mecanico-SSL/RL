@@ -1,11 +1,32 @@
-from typing import Dict, List
-from dataclasses import field
-from pydantic import BaseModel
+from typing import Dict, List, Optional
+from pydantic import BaseModel, Field, field_validator
 
 class InitialPosition(BaseModel):
-    blue: Dict[int, List[float]] = field(default_factory=dict)
-    yellow: Dict[int, List[float]] = field(default_factory=dict)
-    ball: List[float] = field(default_factory=dict)
+    blue: Dict[int, Optional[List[float]]] = Field(default_factory=dict)
+    yellow: Dict[int, Optional[List[float]]] = Field(default_factory=dict)
+    ball: Optional[List[float]] = None
+
+    @field_validator("blue", "yellow", mode="before")
+    @classmethod
+    def _normalize_team_positions(cls, value):
+        if value is None:
+            return {}
+        if isinstance(value, dict):
+            normalized = {}
+            for key, pos in value.items():
+                if isinstance(pos, str) and pos.strip().lower() in {"none", "null", ""}:
+                    normalized[key] = None
+                else:
+                    normalized[key] = pos
+            return normalized
+        return value
+
+    @field_validator("ball", mode="before")
+    @classmethod
+    def _normalize_ball(cls, value):
+        if isinstance(value, str) and value.strip().lower() in {"none", "null", ""}:
+            return None
+        return value
 
 
 class Config(BaseModel):
