@@ -1053,3 +1053,37 @@ policy-verifier (post-result): APROVADO COM RESSALVAS. Condicoes adotadas:
 - Backlog atualizado: self-play real com regra de sync explicita permanece a
   hipotese estrutural candidata; novo pre-registro deve exigir replicacao
   por seeds de treino e pool ampliado (ckpt0, ckpt3, iter235, D240, D260).
+
+## Diagnóstico comportamental (2026-08-27)
+
+Ferramentas novas: `scripts/collect_behavior_trajectories.py` (rollouts no container
+histórico `rl-policy-training:c684c2b`, CPU-only, grava por step bola/robôs/ações/
+rewards e os 4 componentes densos via funções exatas do `rewards.py` e945e9a) e
+`scripts/analyze_behavior_metrics.py` (heatmaps, movimento, posse, toques/kicks com
+debounce, chutes no alvo, decomposição de reward, correlação componente↔gol).
+
+Protocolo: blue determinístico vs yellow=`ckpt3` sample; seeds 200–229 (fora do
+holdout 0–79); 30 eps/confronto; blue ∈ {iter235, ckpt3, D260}. Artefatos em
+`experiment_results/behavior/` (npz + metrics.json + heatmaps.png).
+
+Resultados (W/L/T; touches/kicks/on-target por ep; corr_goal r_speed):
+- iter235: 17/0/13; 11,1 / 12,2 / 1,4; corr 0,53
+- ckpt3:   18/0/12; 12,0 / 13,6 / 1,4; corr 0,53
+- D260:    23/0/7;   7,8 /  9,2 / 1,0; corr 0,53
+
+Achados:
+1. **Colapso de papéis**: heatmaps mostram apenas `blue_0` atacando (faixa central
+   até o gol); `blue_1`/`blue_2` ficam confinados em x∈[−2,−1] em TODOS os
+   checkpoints. 2 de 3 robôs não participam do ataque.
+2. **Baixa qualidade de finalização**: ~10–14 eventos de kick/ep mas só ~1–1,4
+   chutes no alvo/ep, com posse ~73–77%. A policy empurra a bola, não finaliza.
+3. **Decomposição de reward**: r_speed é o único componente com média positiva e o
+   mais correlacionado com gol (0,53 nos três confrontos); r_off/r_def são offsets
+   quase constantes (~−0,19/−0,10) com pouco sinal discriminante.
+4. D260 venceu mais (23/30) com MENOS toques/kicks — mais eficiente por posse, e
+   nenhum episódio terminou com bola fora nesses confrontos.
+
+Restrições: diagnóstico read-only, seeds frescos, sem promoção de checkpoint.
+Essas métricas passam a ser critérios secundários pré-registrados da próxima
+campanha (opponent-pool), pendente de debate (idea-debater) e pré-registro
+(policy-verifier).

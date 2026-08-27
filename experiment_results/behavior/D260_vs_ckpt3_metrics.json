@@ -1,0 +1,1143 @@
+{
+ "summary": {
+  "matchup": "PPO_Soccer_adf3c_00000_0_2026-08-15_22-57-24/checkpoint_000003 vs PPO_Soccer_baseline_2025-03-16/checkpoint_000003",
+  "modes": "blue=deterministic yellow=stochastic",
+  "episodes": 30,
+  "seeds": "200..229",
+  "W/L/T": "23/0/7",
+  "ball_out_episodes": 0,
+  "time_to_goal_s": [
+   6.2,
+   6.3,
+   6.3,
+   7.4,
+   8.4,
+   9.1,
+   9.2,
+   9.9,
+   10.0,
+   10.2,
+   10.3,
+   10.9,
+   16.1,
+   16.9,
+   17.5,
+   18.8,
+   19.3,
+   20.8,
+   21.6,
+   23.1,
+   29.8,
+   37.4,
+   38.6
+  ],
+  "blue_speed_mean": 0.6239,
+  "blue_speed_p95": 1.2421,
+  "blue_pct_stopped": 0.0138,
+  "yellow_pct_stopped": 0.013,
+  "blue_spread_mean_m": 2.1578,
+  "ball_pct_def": 0.0005,
+  "ball_pct_mid": 0.5988,
+  "ball_pct_att": 0.4007,
+  "possession_blue_pct": 0.7693,
+  "ball_speed_to_goal_mean": 0.4903,
+  "touches_blue_per_ep": 7.77,
+  "touches_yellow_per_ep": 4.17,
+  "blue_kicks_per_ep": 9.2,
+  "blue_shots_on_target_per_ep": 0.97,
+  "rw_r_speed_mean": 0.0266,
+  "rw_r_speed_share": 0.459,
+  "rw_r_dist_mean": -0.0705,
+  "rw_r_dist_share": 0.11,
+  "rw_r_off_mean": -0.1838,
+  "rw_r_off_share": 0.282,
+  "rw_r_def_mean": -0.0974,
+  "rw_r_def_share": 0.149,
+  "corr_goal_r_speed": 0.531,
+  "corr_goal_r_dist": 0.168,
+  "corr_goal_r_off": 0.347,
+  "corr_goal_r_def": 0.194
+ },
+ "per_episode": [
+  {
+   "steps": 272,
+   "sim_seconds": 9.066666666666666,
+   "blue_dist_per_robot_m": [
+    8.899999618530273,
+    3.490000009536743,
+    3.5799999237060547
+   ],
+   "blue_speed_mean": 0.5873352289199829,
+   "blue_speed_p95": 1.142228603363037,
+   "blue_pct_stopped": 0.012254901960784314,
+   "yellow_pct_stopped": 0.00980392156862745,
+   "blue_spread_mean_m": 2.2179012298583984,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6286764705882353,
+   "ball_pct_att": 0.3713235294117647,
+   "possession_blue_pct": 0.9044117647058824,
+   "touches_blue": 2,
+   "touches_yellow": 2,
+   "blue_kicks": 4,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.5032603144645691,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.061799999326467514,
+    "r_dist": -0.08209999650716782,
+    "r_off": -0.25270000100135803,
+    "r_def": -0.09950000047683716
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.499,
+    "r_dist": 0.095,
+    "r_off": 0.291,
+    "r_def": 0.115
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    39.150001525878906,
+    17.56999969482422,
+    16.209999084472656
+   ],
+   "blue_speed_mean": 0.6077170968055725,
+   "blue_speed_p95": 1.2291972637176514,
+   "blue_pct_stopped": 0.019444444444444445,
+   "yellow_pct_stopped": 0.011666666666666667,
+   "blue_spread_mean_m": 2.358848810195923,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.7175,
+   "ball_pct_att": 0.2825,
+   "possession_blue_pct": 0.635,
+   "touches_blue": 16,
+   "touches_yellow": 11,
+   "blue_kicks": 13,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.22930628061294556,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.0632999986410141,
+    "r_dist": -0.09309999644756317,
+    "r_off": -0.21610000729560852,
+    "r_def": -0.12229999899864197
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.507,
+    "r_dist": 0.106,
+    "r_off": 0.247,
+    "r_def": 0.14
+   }
+  },
+  {
+   "steps": 185,
+   "sim_seconds": 6.166666666666667,
+   "blue_dist_per_robot_m": [
+    6.809999942779541,
+    2.690000057220459,
+    2.609999895095825
+   ],
+   "blue_speed_mean": 0.6546095609664917,
+   "blue_speed_p95": 1.284472107887268,
+   "blue_pct_stopped": 0.012612612612612612,
+   "yellow_pct_stopped": 0.012612612612612612,
+   "blue_spread_mean_m": 2.161741256713867,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.572972972972973,
+   "ball_pct_att": 0.42702702702702705,
+   "possession_blue_pct": 0.9783783783783784,
+   "touches_blue": 2,
+   "touches_yellow": 1,
+   "blue_kicks": 3,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.7386298775672913,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.1429000049829483,
+    "r_dist": -0.04320000112056732,
+    "r_off": -0.1379999965429306,
+    "r_def": -0.08299999684095383
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.791,
+    "r_dist": 0.034,
+    "r_off": 0.109,
+    "r_def": 0.066
+   }
+  },
+  {
+   "steps": 309,
+   "sim_seconds": 10.3,
+   "blue_dist_per_robot_m": [
+    11.0600004196167,
+    6.090000152587891,
+    5.940000057220459
+   ],
+   "blue_speed_mean": 0.7475435733795166,
+   "blue_speed_p95": 1.2396262884140015,
+   "blue_pct_stopped": 0.003236245954692557,
+   "yellow_pct_stopped": 0.005393743257820928,
+   "blue_spread_mean_m": 1.8002729415893555,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6375404530744336,
+   "ball_pct_att": 0.36245954692556637,
+   "possession_blue_pct": 0.5533980582524272,
+   "touches_blue": 2,
+   "touches_yellow": 2,
+   "blue_kicks": 3,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.44141826033592224,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.04450000077486038,
+    "r_dist": -0.0860000029206276,
+    "r_off": -0.17579999566078186,
+    "r_def": -0.1152999997138977
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.452,
+    "r_dist": 0.125,
+    "r_off": 0.255,
+    "r_def": 0.167
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    34.209999084472656,
+    17.989999771118164,
+    17.350000381469727
+   ],
+   "blue_speed_mean": 0.5795945525169373,
+   "blue_speed_p95": 1.218908667564392,
+   "blue_pct_stopped": 0.016666666666666666,
+   "yellow_pct_stopped": 0.012777777777777779,
+   "blue_spread_mean_m": 1.9674381017684937,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5158333333333334,
+   "ball_pct_att": 0.4841666666666667,
+   "possession_blue_pct": 0.6408333333333334,
+   "touches_blue": 20,
+   "touches_yellow": 10,
+   "blue_kicks": 23,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.3304249942302704,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.05889999866485596,
+    "r_dist": -0.05939999967813492,
+    "r_off": -0.26330000162124634,
+    "r_def": -0.10949999839067459
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.488,
+    "r_dist": 0.07,
+    "r_off": 0.312,
+    "r_def": 0.13
+   }
+  },
+  {
+   "steps": 508,
+   "sim_seconds": 16.933333333333334,
+   "blue_dist_per_robot_m": [
+    16.139999389648438,
+    6.900000095367432,
+    6.860000133514404
+   ],
+   "blue_speed_mean": 0.5887548327445984,
+   "blue_speed_p95": 1.2334860563278198,
+   "blue_pct_stopped": 0.013779527559055118,
+   "yellow_pct_stopped": 0.005905511811023622,
+   "blue_spread_mean_m": 2.5764267444610596,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.33267716535433073,
+   "ball_pct_att": 0.6673228346456693,
+   "possession_blue_pct": 0.610236220472441,
+   "touches_blue": 7,
+   "touches_yellow": 4,
+   "blue_kicks": 5,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.5379045009613037,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.0333000011742115,
+    "r_dist": -0.08250000327825546,
+    "r_off": -0.21480000019073486,
+    "r_def": -0.07559999823570251
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.385,
+    "r_dist": 0.136,
+    "r_off": 0.354,
+    "r_def": 0.125
+   }
+  },
+  {
+   "steps": 327,
+   "sim_seconds": 10.9,
+   "blue_dist_per_robot_m": [
+    11.289999961853027,
+    6.769999980926514,
+    5.690000057220459
+   ],
+   "blue_speed_mean": 0.7263240218162537,
+   "blue_speed_p95": 1.236129641532898,
+   "blue_pct_stopped": 0.0050968399592252805,
+   "yellow_pct_stopped": 0.01529051987767584,
+   "blue_spread_mean_m": 1.592369794845581,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.8226299694189603,
+   "ball_pct_att": 0.17737003058103976,
+   "possession_blue_pct": 0.7798165137614679,
+   "touches_blue": 2,
+   "touches_yellow": 2,
+   "blue_kicks": 3,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.4172569513320923,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.03709999844431877,
+    "r_dist": -0.07909999787807465,
+    "r_off": -0.1623000055551529,
+    "r_def": -0.12849999964237213
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.412,
+    "r_dist": 0.126,
+    "r_off": 0.258,
+    "r_def": 0.204
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    38.15999984741211,
+    18.940000534057617,
+    16.989999771118164
+   ],
+   "blue_speed_mean": 0.6173848509788513,
+   "blue_speed_p95": 1.2281137704849243,
+   "blue_pct_stopped": 0.015555555555555555,
+   "yellow_pct_stopped": 0.014166666666666666,
+   "blue_spread_mean_m": 2.151334285736084,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5958333333333333,
+   "ball_pct_att": 0.4041666666666667,
+   "possession_blue_pct": 0.6616666666666666,
+   "touches_blue": 16,
+   "touches_yellow": 8,
+   "blue_kicks": 19,
+   "blue_shots_on_target": 3,
+   "ball_speed_to_goal_mean": 0.5125775933265686,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.014800000004470348,
+    "r_dist": -0.06610000133514404,
+    "r_off": -0.17520000040531158,
+    "r_def": -0.08290000259876251
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.242,
+    "r_dist": 0.154,
+    "r_off": 0.41,
+    "r_def": 0.194
+   }
+  },
+  {
+   "steps": 305,
+   "sim_seconds": 10.166666666666666,
+   "blue_dist_per_robot_m": [
+    9.930000305175781,
+    4.25,
+    4.170000076293945
+   ],
+   "blue_speed_mean": 0.6015920042991638,
+   "blue_speed_p95": 1.2293732166290283,
+   "blue_pct_stopped": 0.041530054644808745,
+   "yellow_pct_stopped": 0.015300546448087432,
+   "blue_spread_mean_m": 1.9427011013031006,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.740983606557377,
+   "ball_pct_att": 0.25901639344262295,
+   "possession_blue_pct": 0.6524590163934426,
+   "touches_blue": 3,
+   "touches_yellow": 1,
+   "blue_kicks": 4,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.607476532459259,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.048900000751018524,
+    "r_dist": -0.08609999716281891,
+    "r_off": -0.12470000237226486,
+    "r_def": -0.07590000331401825
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.544,
+    "r_dist": 0.137,
+    "r_off": 0.198,
+    "r_def": 0.121
+   }
+  },
+  {
+   "steps": 190,
+   "sim_seconds": 6.333333333333333,
+   "blue_dist_per_robot_m": [
+    6.949999809265137,
+    2.6600000858306885,
+    2.630000114440918
+   ],
+   "blue_speed_mean": 0.6441131234169006,
+   "blue_speed_p95": 1.317914605140686,
+   "blue_pct_stopped": 0.008771929824561403,
+   "yellow_pct_stopped": 0.008771929824561403,
+   "blue_spread_mean_m": 2.1489624977111816,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6736842105263158,
+   "ball_pct_att": 0.3263157894736842,
+   "possession_blue_pct": 0.9631578947368421,
+   "touches_blue": 2,
+   "touches_yellow": 1,
+   "blue_kicks": 4,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.718696117401123,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.12690000236034393,
+    "r_dist": -0.05649999901652336,
+    "r_off": -0.12120000272989273,
+    "r_def": -0.0908999964594841
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.768,
+    "r_dist": 0.049,
+    "r_off": 0.105,
+    "r_def": 0.079
+   }
+  },
+  {
+   "steps": 1158,
+   "sim_seconds": 38.6,
+   "blue_dist_per_robot_m": [
+    37.880001068115234,
+    19.739999771118164,
+    17.34000015258789
+   ],
+   "blue_speed_mean": 0.6472810506820679,
+   "blue_speed_p95": 1.234248399734497,
+   "blue_pct_stopped": 0.013816925734024179,
+   "yellow_pct_stopped": 0.016983304548071388,
+   "blue_spread_mean_m": 2.080596446990967,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6545768566493955,
+   "ball_pct_att": 0.3454231433506045,
+   "possession_blue_pct": 0.7504317789291882,
+   "touches_blue": 13,
+   "touches_yellow": 9,
+   "blue_kicks": 14,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.3189486861228943,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.039000000804662704,
+    "r_dist": -0.08449999988079071,
+    "r_off": -0.21729999780654907,
+    "r_def": -0.12160000205039978
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.392,
+    "r_dist": 0.121,
+    "r_off": 0.312,
+    "r_def": 0.175
+   }
+  },
+  {
+   "steps": 277,
+   "sim_seconds": 9.233333333333333,
+   "blue_dist_per_robot_m": [
+    9.729999542236328,
+    4.389999866485596,
+    4.369999885559082
+   ],
+   "blue_speed_mean": 0.667466938495636,
+   "blue_speed_p95": 1.2547550201416016,
+   "blue_pct_stopped": 0.01444043321299639,
+   "yellow_pct_stopped": 0.02527075812274368,
+   "blue_spread_mean_m": 2.100493907928467,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5884476534296029,
+   "ball_pct_att": 0.41155234657039713,
+   "possession_blue_pct": 0.8014440433212996,
+   "touches_blue": 3,
+   "touches_yellow": 1,
+   "blue_kicks": 5,
+   "blue_shots_on_target": 3,
+   "ball_speed_to_goal_mean": 0.832666277885437,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.09809999912977219,
+    "r_dist": -0.08470000326633453,
+    "r_off": -0.13899999856948853,
+    "r_def": -0.08089999854564667
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.693,
+    "r_dist": 0.085,
+    "r_off": 0.14,
+    "r_def": 0.082
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    38.90999984741211,
+    17.389999389648438,
+    15.789999961853027
+   ],
+   "blue_speed_mean": 0.6006810069084167,
+   "blue_speed_p95": 1.2438151836395264,
+   "blue_pct_stopped": 0.015555555555555555,
+   "yellow_pct_stopped": 0.008888888888888889,
+   "blue_spread_mean_m": 2.4126040935516357,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5041666666666667,
+   "ball_pct_att": 0.49583333333333335,
+   "possession_blue_pct": 0.7716666666666666,
+   "touches_blue": 19,
+   "touches_yellow": 9,
+   "blue_kicks": 17,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.3035179674625397,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.03350000083446503,
+    "r_dist": -0.0689999982714653,
+    "r_off": -0.19859999418258667,
+    "r_def": -0.10869999974966049
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.384,
+    "r_dist": 0.113,
+    "r_off": 0.325,
+    "r_def": 0.178
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    40.66999816894531,
+    19.530000686645508,
+    17.829999923706055
+   ],
+   "blue_speed_mean": 0.6502158045768738,
+   "blue_speed_p95": 1.236166000366211,
+   "blue_pct_stopped": 0.018055555555555554,
+   "yellow_pct_stopped": 0.0175,
+   "blue_spread_mean_m": 1.9372107982635498,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6858333333333333,
+   "ball_pct_att": 0.31416666666666665,
+   "possession_blue_pct": 0.775,
+   "touches_blue": 13,
+   "touches_yellow": 8,
+   "blue_kicks": 17,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.5597303509712219,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.009399999864399433,
+    "r_dist": -0.08669999986886978,
+    "r_off": -0.1777999997138977,
+    "r_def": -0.09849999845027924
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.154,
+    "r_dist": 0.202,
+    "r_off": 0.414,
+    "r_def": 0.23
+   }
+  },
+  {
+   "steps": 253,
+   "sim_seconds": 8.433333333333334,
+   "blue_dist_per_robot_m": [
+    8.6899995803833,
+    3.1600000858306885,
+    3.109999895095825
+   ],
+   "blue_speed_mean": 0.5914364457130432,
+   "blue_speed_p95": 1.2357046604156494,
+   "blue_pct_stopped": 0.011857707509881422,
+   "yellow_pct_stopped": 0.0013175230566534915,
+   "blue_spread_mean_m": 2.290999412536621,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.48616600790513836,
+   "ball_pct_att": 0.5138339920948617,
+   "possession_blue_pct": 0.8814229249011858,
+   "touches_blue": 4,
+   "touches_yellow": 1,
+   "blue_kicks": 2,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.5437391400337219,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.07360000163316727,
+    "r_dist": -0.04800000041723251,
+    "r_off": -0.13490000367164612,
+    "r_def": -0.093299999833107
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.651,
+    "r_dist": 0.061,
+    "r_off": 0.17,
+    "r_def": 0.118
+   }
+  },
+  {
+   "steps": 694,
+   "sim_seconds": 23.133333333333333,
+   "blue_dist_per_robot_m": [
+    21.56999969482422,
+    11.369999885559082,
+    10.970000267028809
+   ],
+   "blue_speed_mean": 0.6327396035194397,
+   "blue_speed_p95": 1.2324374914169312,
+   "blue_pct_stopped": 0.01440922190201729,
+   "yellow_pct_stopped": 0.012007684918347743,
+   "blue_spread_mean_m": 1.907873272895813,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6498559077809798,
+   "ball_pct_att": 0.35014409221902015,
+   "possession_blue_pct": 0.840057636887608,
+   "touches_blue": 8,
+   "touches_yellow": 4,
+   "blue_kicks": 10,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.24818941950798035,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.05649999901652336,
+    "r_dist": -0.07580000162124634,
+    "r_off": -0.24819999933242798,
+    "r_def": -0.12970000505447388
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.466,
+    "r_dist": 0.089,
+    "r_off": 0.292,
+    "r_def": 0.153
+   }
+  },
+  {
+   "steps": 483,
+   "sim_seconds": 16.1,
+   "blue_dist_per_robot_m": [
+    15.5,
+    6.78000020980835,
+    6.099999904632568
+   ],
+   "blue_speed_mean": 0.5875628590583801,
+   "blue_speed_p95": 1.2358193397521973,
+   "blue_pct_stopped": 0.011042097998619738,
+   "yellow_pct_stopped": 0.013802622498274672,
+   "blue_spread_mean_m": 2.3263895511627197,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.453416149068323,
+   "ball_pct_att": 0.546583850931677,
+   "possession_blue_pct": 0.8571428571428571,
+   "touches_blue": 5,
+   "touches_yellow": 4,
+   "blue_kicks": 8,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.5642786026000977,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.04699999839067459,
+    "r_dist": -0.05220000073313713,
+    "r_off": -0.19629999995231628,
+    "r_def": -0.08299999684095383
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.498,
+    "r_dist": 0.079,
+    "r_off": 0.297,
+    "r_def": 0.126
+   }
+  },
+  {
+   "steps": 298,
+   "sim_seconds": 9.933333333333334,
+   "blue_dist_per_robot_m": [
+    10.539999961853027,
+    5.550000190734863,
+    5.0
+   ],
+   "blue_speed_mean": 0.7077922821044922,
+   "blue_speed_p95": 1.3527384996414185,
+   "blue_pct_stopped": 0.007829977628635347,
+   "yellow_pct_stopped": 0.015659955257270694,
+   "blue_spread_mean_m": 1.889349102973938,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.7718120805369127,
+   "ball_pct_att": 0.22818791946308725,
+   "possession_blue_pct": 0.9798657718120806,
+   "touches_blue": 4,
+   "touches_yellow": 1,
+   "blue_kicks": 5,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.4094095826148987,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.004100000020116568,
+    "r_dist": -0.0778999999165535,
+    "r_off": -0.15569999814033508,
+    "r_def": -0.1143999993801117
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.077,
+    "r_dist": 0.207,
+    "r_off": 0.413,
+    "r_def": 0.303
+   }
+  },
+  {
+   "steps": 189,
+   "sim_seconds": 6.3,
+   "blue_dist_per_robot_m": [
+    6.070000171661377,
+    2.0999999046325684,
+    1.8700000047683716
+   ],
+   "blue_speed_mean": 0.5313487648963928,
+   "blue_speed_p95": 1.2359102964401245,
+   "blue_pct_stopped": 0.008818342151675485,
+   "yellow_pct_stopped": 0.010582010582010581,
+   "blue_spread_mean_m": 2.4279417991638184,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5661375661375662,
+   "ball_pct_att": 0.43386243386243384,
+   "possession_blue_pct": 0.9417989417989417,
+   "touches_blue": 2,
+   "touches_yellow": 1,
+   "blue_kicks": 3,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.7237890362739563,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.1354999989271164,
+    "r_dist": -0.042100001126527786,
+    "r_off": -0.1234000027179718,
+    "r_def": -0.0714000016450882
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.8,
+    "r_dist": 0.036,
+    "r_off": 0.104,
+    "r_def": 0.06
+   }
+  },
+  {
+   "steps": 524,
+   "sim_seconds": 17.466666666666665,
+   "blue_dist_per_robot_m": [
+    14.989999771118164,
+    7.420000076293945,
+    7.190000057220459
+   ],
+   "blue_speed_mean": 0.5650656819343567,
+   "blue_speed_p95": 1.2321710586547852,
+   "blue_pct_stopped": 0.015903307888040712,
+   "yellow_pct_stopped": 0.015903307888040712,
+   "blue_spread_mean_m": 2.8871288299560547,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.42938931297709926,
+   "ball_pct_att": 0.5706106870229007,
+   "possession_blue_pct": 0.8549618320610687,
+   "touches_blue": 12,
+   "touches_yellow": 6,
+   "blue_kicks": 14,
+   "blue_shots_on_target": 4,
+   "ball_speed_to_goal_mean": 0.5213455557823181,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.05590000003576279,
+    "r_dist": -0.03970000147819519,
+    "r_off": -0.14079999923706055,
+    "r_def": -0.08070000261068344
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.6,
+    "r_dist": 0.061,
+    "r_off": 0.216,
+    "r_def": 0.124
+   }
+  },
+  {
+   "steps": 1122,
+   "sim_seconds": 37.4,
+   "blue_dist_per_robot_m": [
+    35.349998474121094,
+    17.079999923706055,
+    16.59000015258789
+   ],
+   "blue_speed_mean": 0.6151660680770874,
+   "blue_speed_p95": 1.2348389625549316,
+   "blue_pct_stopped": 0.01277480689245395,
+   "yellow_pct_stopped": 0.013071895424836602,
+   "blue_spread_mean_m": 2.1353867053985596,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6203208556149733,
+   "ball_pct_att": 0.37967914438502676,
+   "possession_blue_pct": 0.6336898395721925,
+   "touches_blue": 13,
+   "touches_yellow": 4,
+   "blue_kicks": 14,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.3462873101234436,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.027699999511241913,
+    "r_dist": -0.08169999718666077,
+    "r_off": -0.20679999887943268,
+    "r_def": -0.1160999983549118
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.324,
+    "r_dist": 0.136,
+    "r_off": 0.346,
+    "r_def": 0.194
+   }
+  },
+  {
+   "steps": 649,
+   "sim_seconds": 21.633333333333333,
+   "blue_dist_per_robot_m": [
+    20.729999542236328,
+    8.319999694824219,
+    7.03000020980835
+   ],
+   "blue_speed_mean": 0.5560863614082336,
+   "blue_speed_p95": 1.2423278093338013,
+   "blue_pct_stopped": 0.017976373908577297,
+   "yellow_pct_stopped": 0.01335387776065742,
+   "blue_spread_mean_m": 2.488140106201172,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.43759630200308164,
+   "ball_pct_att": 0.5624036979969184,
+   "possession_blue_pct": 0.5839753466872111,
+   "touches_blue": 5,
+   "touches_yellow": 2,
+   "blue_kicks": 7,
+   "blue_shots_on_target": 2,
+   "ball_speed_to_goal_mean": 0.6323766112327576,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.07209999859333038,
+    "r_dist": -0.05959999933838844,
+    "r_off": -0.1695999950170517,
+    "r_def": -0.06759999692440033
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.63,
+    "r_dist": 0.074,
+    "r_off": 0.212,
+    "r_def": 0.084
+   }
+  },
+  {
+   "steps": 895,
+   "sim_seconds": 29.833333333333332,
+   "blue_dist_per_robot_m": [
+    30.760000228881836,
+    14.729999542236328,
+    13.220000267028809
+   ],
+   "blue_speed_mean": 0.6560078859329224,
+   "blue_speed_p95": 1.2797316312789917,
+   "blue_pct_stopped": 0.0148975791433892,
+   "yellow_pct_stopped": 0.01601489757914339,
+   "blue_spread_mean_m": 1.9294726848602295,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6849162011173184,
+   "ball_pct_att": 0.31508379888268156,
+   "possession_blue_pct": 0.8536312849162011,
+   "touches_blue": 9,
+   "touches_yellow": 2,
+   "blue_kicks": 10,
+   "blue_shots_on_target": 2,
+   "ball_speed_to_goal_mean": 0.3854537308216095,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.011099999770522118,
+    "r_dist": -0.0794999971985817,
+    "r_off": -0.20319999754428864,
+    "r_def": -0.10689999908208847
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.167,
+    "r_dist": 0.17,
+    "r_off": 0.435,
+    "r_def": 0.229
+   }
+  },
+  {
+   "steps": 301,
+   "sim_seconds": 10.033333333333333,
+   "blue_dist_per_robot_m": [
+    10.130000114440918,
+    4.559999942779541,
+    4.599999904632568
+   ],
+   "blue_speed_mean": 0.640747606754303,
+   "blue_speed_p95": 1.236730694770813,
+   "blue_pct_stopped": 0.005537098560354375,
+   "yellow_pct_stopped": 0.013289036544850499,
+   "blue_spread_mean_m": 2.024712085723877,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.6644518272425249,
+   "ball_pct_att": 0.33554817275747506,
+   "possession_blue_pct": 0.9102990033222591,
+   "touches_blue": 3,
+   "touches_yellow": 2,
+   "blue_kicks": 4,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.45557406544685364,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.04830000177025795,
+    "r_dist": -0.07069999724626541,
+    "r_off": -0.2214999943971634,
+    "r_def": -0.11289999634027481
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.455,
+    "r_dist": 0.095,
+    "r_off": 0.298,
+    "r_def": 0.152
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    35.84000015258789,
+    17.459999084472656,
+    15.680000305175781
+   ],
+   "blue_speed_mean": 0.5748690962791443,
+   "blue_speed_p95": 1.228310227394104,
+   "blue_pct_stopped": 0.019166666666666665,
+   "yellow_pct_stopped": 0.012777777777777779,
+   "blue_spread_mean_m": 2.391529083251953,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5233333333333333,
+   "ball_pct_att": 0.4766666666666667,
+   "possession_blue_pct": 0.6708333333333333,
+   "touches_blue": 13,
+   "touches_yellow": 10,
+   "blue_kicks": 21,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.445955365896225,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.02449999935925007,
+    "r_dist": -0.07129999995231628,
+    "r_off": -0.21080000698566437,
+    "r_def": -0.08950000256299973
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.316,
+    "r_dist": 0.131,
+    "r_off": 0.388,
+    "r_def": 0.165
+   }
+  },
+  {
+   "steps": 579,
+   "sim_seconds": 19.3,
+   "blue_dist_per_robot_m": [
+    17.420000076293945,
+    8.140000343322754,
+    7.130000114440918
+   ],
+   "blue_speed_mean": 0.5646708607673645,
+   "blue_speed_p95": 1.2357478141784668,
+   "blue_pct_stopped": 0.016119746689694875,
+   "yellow_pct_stopped": 0.016119746689694875,
+   "blue_spread_mean_m": 2.543657064437866,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.4939550949913644,
+   "ball_pct_att": 0.5060449050086355,
+   "possession_blue_pct": 0.5146804835924007,
+   "touches_blue": 6,
+   "touches_yellow": 6,
+   "blue_kicks": 8,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.49610254168510437,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.020800000056624413,
+    "r_dist": -0.07890000194311142,
+    "r_off": -0.20509999990463257,
+    "r_def": -0.08370000123977661
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.284,
+    "r_dist": 0.154,
+    "r_off": 0.399,
+    "r_def": 0.163
+   }
+  },
+  {
+   "steps": 222,
+   "sim_seconds": 7.4,
+   "blue_dist_per_robot_m": [
+    7.159999847412109,
+    3.0899999141693115,
+    2.799999952316284
+   ],
+   "blue_speed_mean": 0.5881431698799133,
+   "blue_speed_p95": 1.2529287338256836,
+   "blue_pct_stopped": 0.0075075075075075074,
+   "yellow_pct_stopped": 0.006006006006006006,
+   "blue_spread_mean_m": 2.239274263381958,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.4864864864864865,
+   "ball_pct_att": 0.5135135135135135,
+   "possession_blue_pct": 0.8558558558558559,
+   "touches_blue": 3,
+   "touches_yellow": 1,
+   "blue_kicks": 5,
+   "blue_shots_on_target": 3,
+   "ball_speed_to_goal_mean": 0.6144701838493347,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.0940999984741211,
+    "r_dist": -0.05209999904036522,
+    "r_off": -0.14970000088214874,
+    "r_def": -0.07580000162124634
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.703,
+    "r_dist": 0.056,
+    "r_off": 0.16,
+    "r_def": 0.081
+   }
+  },
+  {
+   "steps": 563,
+   "sim_seconds": 18.766666666666666,
+   "blue_dist_per_robot_m": [
+    17.950000762939453,
+    8.850000381469727,
+    8.15999984741211
+   ],
+   "blue_speed_mean": 0.6208356022834778,
+   "blue_speed_p95": 1.231502890586853,
+   "blue_pct_stopped": 0.014209591474245116,
+   "yellow_pct_stopped": 0.011841326228537596,
+   "blue_spread_mean_m": 2.0809929370880127,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.5950266429840142,
+   "ball_pct_att": 0.4049733570159858,
+   "possession_blue_pct": 0.6145648312611013,
+   "touches_blue": 6,
+   "touches_yellow": 1,
+   "blue_kicks": 10,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.6125355362892151,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": 0.019200000911951065,
+    "r_dist": -0.07890000194311142,
+    "r_off": -0.15770000219345093,
+    "r_def": -0.07959999889135361
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.298,
+    "r_dist": 0.175,
+    "r_off": 0.35,
+    "r_def": 0.177
+   }
+  },
+  {
+   "steps": 623,
+   "sim_seconds": 20.766666666666666,
+   "blue_dist_per_robot_m": [
+    21.040000915527344,
+    11.59000015258789,
+    10.619999885559082
+   ],
+   "blue_speed_mean": 0.6941706538200378,
+   "blue_speed_p95": 1.2358583211898804,
+   "blue_pct_stopped": 0.0149812734082397,
+   "yellow_pct_stopped": 0.012841091492776886,
+   "blue_spread_mean_m": 1.7136608362197876,
+   "ball_pct_def": 0.0,
+   "ball_pct_mid": 0.8475120385232745,
+   "ball_pct_att": 0.15248796147672553,
+   "possession_blue_pct": 0.9309791332263242,
+   "touches_blue": 9,
+   "touches_yellow": 4,
+   "blue_kicks": 11,
+   "blue_shots_on_target": 1,
+   "ball_speed_to_goal_mean": 0.38586199283599854,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.02800000086426735,
+    "r_dist": -0.0689999982714653,
+    "r_off": -0.195700004696846,
+    "r_def": -0.10989999771118164
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.343,
+    "r_dist": 0.121,
+    "r_off": 0.343,
+    "r_def": 0.193
+   }
+  },
+  {
+   "steps": 1200,
+   "sim_seconds": 40.0,
+   "blue_dist_per_robot_m": [
+    39.380001068115234,
+    21.399999618530273,
+    19.649999618530273
+   ],
+   "blue_speed_mean": 0.6701949238777161,
+   "blue_speed_p95": 1.2325400114059448,
+   "blue_pct_stopped": 0.009722222222222222,
+   "yellow_pct_stopped": 0.025277777777777777,
+   "blue_spread_mean_m": 2.007629156112671,
+   "ball_pct_def": 0.015,
+   "ball_pct_mid": 0.5825,
+   "ball_pct_att": 0.4025,
+   "possession_blue_pct": 0.6783333333333333,
+   "touches_blue": 11,
+   "touches_yellow": 7,
+   "blue_kicks": 10,
+   "blue_shots_on_target": 0,
+   "ball_speed_to_goal_mean": 0.27048414945602417,
+   "ball_out": false,
+   "reward_components_mean": {
+    "r_speed": -0.04639999940991402,
+    "r_dist": -0.08009999990463257,
+    "r_off": -0.21770000457763672,
+    "r_def": -0.11580000072717667
+   },
+   "reward_weighted_share": {
+    "r_speed": 0.44,
+    "r_dist": 0.108,
+    "r_off": 0.295,
+    "r_def": 0.157
+   }
+  }
+ ]
+}

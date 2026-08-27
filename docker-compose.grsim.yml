@@ -90,7 +90,8 @@ services:
     environment:
       # Override no shell: CHECKPOINT_PATH=... ./start_policy.sh
       # Default = checkpoint operacional da campanha 2 (iter235, gate grSim 2026-08-15)
-      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003}
+      # Override so da yellow: CHECKPOINT_PATH_YELLOW=... (cai no CHECKPOINT_PATH se ausente)
+      - CHECKPOINT_PATH=${CHECKPOINT_PATH_YELLOW:-${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003}}
       - TEAM=yellow
       # mean (deterministic) e o modo validado pela decisao H2
       - ACTION_MODE=${ACTION_MODE:-mean}

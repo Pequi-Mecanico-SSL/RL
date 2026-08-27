@@ -73,47 +73,78 @@ services:
       # Diretorio para logs (read-write)
       - ./logs:/app/logs
     environment:
-      # Caminho do checkpoint (ajustar conforme necessario)
-      - CHECKPOINT_PATH=/checkpoints/PPO_selfplay_rec/PPO_Soccer_baseline_2025-03-16/checkpoint_000003
-      # Time a controlar (blue ou yellow)
+      # Override no shell: CHECKPOINT_PATH=... (paridade com docker-compose.grsim.yml)
+      # Default = checkpoint operacional da campanha 2 (iter235, gate grSim 2026-08-15)
+      - CHECKPOINT_PATH=${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003}
       - TEAM=blue
-      # Host do grSim (localhost em network host)
+      # mean (deterministic) e o modo validado pela decisao H2
+      - ACTION_MODE=${ACTION_MODE:-mean}
+      - ACTION_SEED=${ACTION_SEED_BLUE:-150}
+      - EPISODE_RESET=${EPISODE_RESET:-1}
+      - KICKOFF_MASTER=1
+      - CUDA_VISIBLE_DEVICES=
       - GRSIM_HOST=127.0.0.1
-      # Porta de comandos do grSim
       - GRSIM_PORT=20011
-      # Porta de vision do grSim
       - VISION_PORT=10020
-      # Endereco multicast de vision
       - VISION_ADDRESS=224.5.23.2
-      # Frames por segundo (deve bater com o treinamento)
       - FPS=30
-      # Dispositivo para PyTorch (cpu ou cuda)
+      - MATCH_TIME=40
+      - VISION_STALE_TIMEOUT=0.25
       - DEVICE=cpu
-      # Nivel de log
       - LOG_LEVEL=INFO
-      # Numero de robos por time
       - N_ROBOTS_BLUE=3
       - N_ROBOTS_YELLOW=3
-      # Tipo de campo (0=6vs6, 1=11vs11, 2=hardware)
       - FIELD_TYPE=1
     working_dir: /app
     command: python deploy_policy_grsim.py
-    healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    stop_grace_period: 5s
     restart: on-failure:3
-    # Limites de recursos
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '1.0'
-          memory: 1G
+
+  # Servico de deploy da policy RL para time AMARELO (paridade com o compose principal)
+  rl-policy-yellow:
+    build:
+      context: .
+      dockerfile: Dockerfile.policy
+    container_name: rl_policy_deploy_yellow
+    depends_on:
+      grsim:
+        condition: service_started
+      rl-policy:
+        condition: service_started
+    network_mode: host
+    volumes:
+      - ./volumes/dgx_checkpoints:/checkpoints:ro
+      - ./scripts:/app/scripts:ro
+      - ./observations.py:/app/observations.py:ro
+      - ./rewards.py:/app/rewards.py:ro
+      - ./config.yaml:/app/config.yaml:ro
+      - ./deploy_policy_grsim.py:/app/deploy_policy_grsim.py:ro
+      - ./logs:/app/logs
+    environment:
+      # Override so da yellow: CHECKPOINT_PATH_YELLOW=... (cai no CHECKPOINT_PATH se ausente)
+      - CHECKPOINT_PATH=${CHECKPOINT_PATH_YELLOW:-${CHECKPOINT_PATH:-/checkpoints/PPO_selfplay_rec/campaign2_iter235/checkpoint_000003}}
+      - TEAM=yellow
+      - ACTION_MODE=${ACTION_MODE:-mean}
+      - ACTION_SEED=${ACTION_SEED_YELLOW:-1150}
+      - EPISODE_RESET=${EPISODE_RESET:-1}
+      - KICKOFF_MASTER=0
+      - CUDA_VISIBLE_DEVICES=
+      - GRSIM_HOST=127.0.0.1
+      - GRSIM_PORT=20011
+      - VISION_PORT=10020
+      - VISION_ADDRESS=224.5.23.2
+      - FPS=30
+      - MATCH_TIME=40
+      - VISION_STALE_TIMEOUT=0.25
+      - DEVICE=cpu
+      - LOG_LEVEL=INFO
+      - N_ROBOTS_BLUE=3
+      - N_ROBOTS_YELLOW=3
+      - FIELD_TYPE=1
+    working_dir: /app
+    command: python deploy_policy_grsim.py
+    stop_grace_period: 5s
+    restart: on-failure:3
 
   # Servico opcional para visualizacao de logs
   log-viewer:
