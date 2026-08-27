@@ -1087,3 +1087,33 @@ Restrições: diagnóstico read-only, seeds frescos, sem promoção de checkpoin
 Essas métricas passam a ser critérios secundários pré-registrados da próxima
 campanha (opponent-pool), pendente de debate (idea-debater) e pré-registro
 (policy-verifier).
+
+## H4 opponent-pool — debate e probe CPU (2026-08-27)
+
+Hipótese limitada: medir o efeito do pool histórico fixo; não atribuir causalidade
+genérica à "diversidade". `idea-debater`: **APOIO COM MUDANÇAS** — treatment com
+quatro `policy_blue` históricas carregadas como yellow, placebo com quatro cópias
+da yellow iter235, mecanismo idêntico, sem `self/latest`/sync, duas seeds pareadas
+e 10 iterações exatas somente após gates.
+
+O primeiro preflight do `policy-verifier` foi **REPROVADO** porque o caminho de
+deploy iter235 era export sem optimizer/RNG. Base corrigida para o checkpoint
+integral `training_runs/h1_runB/.../checkpoint_000003`, `algorithm_state.pkl`
+SHA-256 `703f16e4...`, counters 9.052.200 env steps.
+
+`scripts/probe_opponent_pool.py` executou, sem SGD e CPU-only, os testes exigidos:
+- expansionou para `opponent_0..3`; apenas `policy_blue` treinável;
+- mapping cíclico `0,1,2,3,0,1,2,3`, três yellow no mesmo slot por episódio;
+- treatment com 4 fontes distintas e placebo com uma fonte repetida;
+- pesos, optimizer e counters blue invariantes durante rollouts;
+- hash canônico de colunas numéricas: mesma seed 4242 reproduz exatamente o
+  comportamento; seed 4343 diverge; zero NaN/Inf;
+- manifesto canônico do Adam remove IDs processuais: checkpoint == restore ==
+  pós-`add_policy` e igualdade entre dois processos; 32 momentos/1.063.418
+  elementos + 16 escalares `step`.
+
+Parecer final `policy-verifier`: **APROVADO COM RESSALVAS** para fechar o probe
+CPU e avançar à implementação/preflight. GPU ainda NÃO autorizada: próximo gate
+é launcher/manifesta imutável, duas medições de recursos e smoke de exatamente
+uma iteração provando avanço finito de blue, opponents congelados, counters
++38.520 e checkpoint estritamente restaurável.

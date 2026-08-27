@@ -70,6 +70,11 @@ def episode_metrics(ep, meta):
     pair = [np.hypot(*(blue[:, i, :2] - blue[:, j, :2]).T)
             for i, j in ((0, 1), (0, 2), (1, 2))]
     out["blue_spread_mean_m"] = float(np.mean(pair))
+    out["blue_1_offensive_half_pct"] = float((blue[:, 1, 0] > 0).mean())
+    out["blue_2_offensive_half_pct"] = float((blue[:, 2, 0] > 0).mean())
+    out["blue_support_offensive_half_pct"] = float(
+        ((blue[:, 1, 0] > 0).mean() + (blue[:, 2, 0] > 0).mean()) / 2
+    )
 
     # bola por tercos (blue ataca +x)
     third = length / 6
@@ -144,7 +149,8 @@ def summarize(path):
     for key in ("blue_speed_mean", "blue_speed_p95", "blue_pct_stopped",
                 "yellow_pct_stopped", "blue_spread_mean_m", "ball_pct_def",
                 "ball_pct_mid", "ball_pct_att", "possession_blue_pct",
-                "ball_speed_to_goal_mean"):
+                "ball_speed_to_goal_mean", "blue_1_offensive_half_pct",
+                "blue_2_offensive_half_pct", "blue_support_offensive_half_pct"):
         summary[key] = round(float(np.mean([m[key] for m in per_ep])), 4)
     for key in ("touches_blue", "touches_yellow", "blue_kicks", "blue_shots_on_target"):
         summary[key + "_per_ep"] = round(float(np.mean([m[key] for m in per_ep])), 2)

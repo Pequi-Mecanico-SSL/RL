@@ -1,0 +1,48 @@
+{
+  "date": "2026-08-27",
+  "hypothesis": "H4: efeito do pool historico fixo sobre participacao ofensiva dos suportes",
+  "base_checkpoint": "training_runs/h1_runB/ray_results/h1_runB_iter235/PPO_Soccer_02d9a_00000_0_2026-08-15_15-50-16/checkpoint_000003",
+  "base_algorithm_state_sha256": "703f16e4b781ddb18d40fa10da134fa7ca9130609c66e5043d55e68d7bda1fa2",
+  "runtime": {
+    "image": "rl-policy-training:c684c2b",
+    "rSoccer": "c684c2b",
+    "reward_contract": "e945e9a",
+    "device": "CPU",
+    "cpus": 2,
+    "memory": "3g"
+  },
+  "treatment": {
+    "source_policy": "policy_blue",
+    "members": ["baseline_ckpt0", "baseline_ckpt3", "iter210", "iter235"],
+    "distinct_source_weight_hashes": 4
+  },
+  "placebo": {
+    "source_policy": "policy_yellow",
+    "member": "iter235",
+    "copies": 4,
+    "distinct_source_weight_hashes": 1
+  },
+  "gates": {
+    "restore_integral": true,
+    "six_policies_loaded": true,
+    "only_policy_blue_trainable": true,
+    "cyclic_slots_0_1_2_3_repeated": true,
+    "all_three_yellow_agents_share_slot_per_episode": true,
+    "blue_weights_unchanged_without_sgd": true,
+    "blue_optimizer_unchanged_without_sgd": true,
+    "algorithm_counters_unchanged_without_sgd": true,
+    "same_seed_behavior_reproducible": true,
+    "different_seed_behavior_differs": true,
+    "numeric_behavior_finite": true,
+    "optimizer_serialized_equals_restored": true,
+    "optimizer_restored_equals_after_add_policy": true,
+    "optimizer_equal_between_processes": true,
+    "optimizer_moment_tensors": 32,
+    "optimizer_moment_elements": 1063418,
+    "optimizer_step_scalars": 16
+  },
+  "idea_debater": "APOIO COM MUDANCAS",
+  "policy_verifier_final": "APROVADO COM RESSALVAS",
+  "gpu_authorized": false,
+  "next_gate": "implementar launcher e smoke GPU de exatamente 1 iteracao apos preflight de recursos e manifesto imutavel"
+}
