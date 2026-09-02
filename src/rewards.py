@@ -62,7 +62,7 @@ def r_dist(field: dict, frame: dict, last_frame: dict, **kwargs):
         robots_left, robots_right = robots_right, robots_left
 
     ball = frame["ball"]
-    geometry = Geometry2D(-field["length"]/2, field["length"]/2, -field["goal_width"]/2, field["goal_width"]/2)
+    geometry = Geometry2D(-field["length"]/2, field["length"]/2, -field["width"]/2, field["width"]/2)
     max_dist = 2.5 # this is to put a limit on the reward
 
     min_dist_left = max_dist
@@ -318,8 +318,8 @@ def r_wheel(field: Field, frame: Frame, last_frame: Frame, **kwargs):
 
 DENSE_REWARDS = [
     #(weight, reward_function, [kwargs])
-    (0.7, r_speed, ["kick_speed_x", "fps"]),
-    (0.1, r_dist,  []),
+    (0.7, r_speed, ["kick_speed_x", "fps"]), # RELEARN: tag 1.0's proven weight
+    (0.1, r_dist,  []), # RELEARN: tag 1.0's proven weight
     (0.1, r_off,   []),
     (0.1, r_def,   []),
     #(0.3, r_pass_or_intercept, ["judge_info", "judge_last_info"]),
@@ -327,8 +327,10 @@ DENSE_REWARDS = [
 ]
 
 SPARSE_REWARDS = {
-    "GOAL_REWARD": 1000, # robot that scored gets this reward and the other team gets negative this reward
+    "GOAL_REWARD": 10, # RELEARN: restored from 1000 -- tag 1.0's proven value; robot that scored gets this reward and the other team gets negative this reward
     "OUTSIDE_REWARD": -10, # the team of the last robot that touched the ball gets this reward
-    "OPPONENT_DEFENSE_AREA": -1000,
-    "TEAM_DEFENSE_AREA": -1000
+    "OPPONENT_DEFENSE_AREA": 0, # RELEARN: restored from -1000 -- tag 1.0's proven value
+    "TEAM_DEFENSE_AREA": 0, # RELEARN: restored from -1000 -- tag 1.0's proven value
+    "COLLISION": 0,
+    "DOUBLE_TOUCH": 0,
 }

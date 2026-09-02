@@ -48,6 +48,7 @@ class Geometry2D():
         return np.clip(dist / max_dist, 0, 1)
     
     def _invert_coordinates(self, obj, on_x = False, on_y = False):
+        obj = dict(obj)  # don't mutate the caller's dict -- it's reused across all 6 observation functions
         if on_x:
             obj['x'] = -obj['x']
             obj['theta'] = 180 - obj['theta'] if obj['theta'] < 180 else 540 - obj['theta']

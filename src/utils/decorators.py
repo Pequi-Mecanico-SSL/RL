@@ -29,8 +29,8 @@ def decorator_observations(obs_func):
             inverter = mapper_inverter[color_main] 
 
             n_main, n_adv = (n_blue, n_yellow) if color_main == 'blue' else (n_yellow, n_blue)
-            main_robots = [inverter(robot) for name, robot in raw_observations.items() if "blue" in name]
-            adv_robots = [inverter(robot) for name, robot in raw_observations.items() if "yellow" in name]
+            main_robots = [inverter(robot) for name, robot in raw_observations.items() if name.startswith(color_main)]
+            adv_robots = [inverter(robot) for name, robot in raw_observations.items() if name.startswith(color_adv)]
 
             main = main_robots[idx] 
             allys = [main_robots[j] for j in range(n_main) if j != idx]
