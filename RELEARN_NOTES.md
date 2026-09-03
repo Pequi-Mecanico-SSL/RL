@@ -618,3 +618,32 @@ the fps fix).
 `record_sslel_env.py`: a small script recording the SSLEL env with random
 actions (no trained checkpoint exists for this field yet) -- useful as a
 quick visual/geometry sanity check independent of any policy.
+
+## Third rendering bug: cosmetic-only constants weren't scaled
+
+After the two fixes above, user reported the field/goal boxes were now
+correctly smaller but "other field's components seem to be the same size"
+(screenshots showed the center circle still at its old, oversized scale).
+Root cause: `SSLRenderField` has several rendering constants with **no
+equivalent in `get_field_params()` at all** -- `center_circle_r`,
+`corner_arc_r`, `margin`, `goal_area_length`, `goal_area_width`. These are
+pure rendering choices, not physics; the original `_SSLEL_RENDER_DIMENSIONS`
+fix only covered the 6 physics-backed keys (`length`, `width`,
+`penalty_length`, `penalty_width`, `goal_width`, `goal_depth`), so these 5
+cosmetic constants stayed at the standard field's absolute values -- e.g. a
+1m-radius center circle, fine on a 9m-long field, eats 44% of a 4.5m-long
+one.
+
+No authoritative SSL-EL spec defines these (rSim's own `SSLELConfig::Field`
+doesn't either), so fixed by scaling them proportionally: added
+`_SSLEL_COSMETIC_SCALE = _SSLEL_RENDER_DIMENSIONS["length"] / SSLRenderField.length`
+(= 4.5/9 = 0.5) and multiplied all 5 cosmetic constants by it, using
+`SSLRenderField`'s own un-patched class defaults as the reference so every
+rendered element stays proportionally consistent with the standard field's
+look. Same scoped patch/restore mechanism as before (`_use_sslel_simulator`),
+just more keys in `_SSLEL_RENDER_DIMENSIONS`.
+
+Verified by re-recording (`record_sslel_env.py 2 15` on `ssl-el-sslel`) and
+extracting a frame: center circle, penalty boxes, goals, and margins are now
+all proportionally correct relative to the field boundary and to each
+other -- matches the expected small-SSL-EL-field look.

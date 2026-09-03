@@ -25,6 +25,28 @@ _SSLEL_RENDER_DIMENSIONS = dict(
     goal_width=0.80, goal_depth=0.18,
 )
 
+# SSLRenderField also has purely-cosmetic constants with NO equivalent in
+# get_field_params() at all (center_circle_r, corner_arc_r, margin,
+# goal_area_length/width) -- the simulator has no opinion on them, they're a
+# rendering-only choice. Fixing only _SSLEL_RENDER_DIMENSIONS above leaves
+# these at the standard field's absolute values, which is wrong on a field
+# half the size: e.g. a 1m-radius center circle (fine on a 9m-long field)
+# eats 44% of a 4.5m-long field, dwarfing everything else in the frame. No
+# authoritative SSL-EL spec for these exists (rSim's own SSLELConfig::Field
+# doesn't define them either), so scale them by the same ratio the real
+# field dimensions shrink by, using SSLRenderField's own un-patched defaults
+# as the reference -- keeps every rendered element proportionally
+# consistent with each other, matching how the standard-field rendering
+# already looks.
+_SSLEL_COSMETIC_SCALE = _SSLEL_RENDER_DIMENSIONS["length"] / SSLRenderField.length
+_SSLEL_RENDER_DIMENSIONS.update(
+    margin=SSLRenderField.margin * _SSLEL_COSMETIC_SCALE,
+    center_circle_r=SSLRenderField.center_circle_r * _SSLEL_COSMETIC_SCALE,
+    corner_arc_r=SSLRenderField.corner_arc_r * _SSLEL_COSMETIC_SCALE,
+    goal_area_length=SSLRenderField.goal_area_length * _SSLEL_COSMETIC_SCALE,
+    goal_area_width=SSLRenderField.goal_area_width * _SSLEL_COSMETIC_SCALE,
+)
+
 
 @contextlib.contextmanager
 def _use_sslel_simulator():
@@ -39,14 +61,14 @@ def _use_sslel_simulator():
     duration. SSLRenderField.length/width/penalty_length/... are HARDCODED
     class constants (rsoccer_gym.Render.SSLRenderField), not derived from
     the actual simulated field at all -- every render (boundary lines, goal,
-    penalty box) always assumes the 9x6m field regardless of which
-    robosim class/field_type is actually simulating. This went unnoticed
-    everywhere else in this project because field_type=1 on robosim.SSL
-    happens to also be 9x6m -- a coincidence that breaks for SSLEL's
-    genuinely different 4.5x3.0m field. VSSRenderField.__init__ (the base
-    class) computes derived values (center_x, margin, screen size) from
-    these class attributes AT CONSTRUCTION TIME, so this must be patched
-    *before* SSLBaseEnv.__init__ constructs self.field_renderer --
+    penalty box, center circle, corner arcs) always assumes the 9x6m field
+    regardless of which robosim class/field_type is actually simulating.
+    This went unnoticed everywhere else in this project because field_type=1
+    on robosim.SSL happens to also be 9x6m -- a coincidence that breaks for
+    SSLEL's genuinely different 4.5x3.0m field. VSSRenderField.__init__ (the
+    base class) computes derived values (center_x, margin, screen size)
+    from these class attributes AT CONSTRUCTION TIME, so this must be
+    patched *before* SSLBaseEnv.__init__ constructs self.field_renderer --
     patching self.field_renderer's instance attributes afterward would not
     recompute them.
     """
