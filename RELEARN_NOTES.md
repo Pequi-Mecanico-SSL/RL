@@ -534,3 +534,87 @@ wanted: build a new image tag from `github.com/Pequi-Mecanico-SSL/rSim.git`
 (matching tag `1.0`'s own Dockerfile line, plus the `cmake<4` fix) and run a
 training pass with `use_sslel: true`, `field_type: 0` to see how the genuine
 small SSL-EL field performs.
+
+## New image built: `ssl-el-sslel`, verified end-to-end
+
+Built a new image tag (not overwriting the shared `ssl-el`) from the fixed
+`Dockerfile` (rSim install line uncommented, `cmake<4` constraint added).
+Build succeeded cleanly; confirmed `robosim.SSLEL` present and correct
+(`field_type=0` -> 4.5x3.0m). Then verified the *whole* integration path,
+not just the raw binding -- constructed `SSLMultiAgentEnv(use_sslel=True,
+field_type=0, ...)` directly and ran `reset()` + 10 `step()` calls:
+`env.field` correctly reports the 4.5x3.0m/0.8m-goal dimensions, and reward
+computation, observations, and the Judge all work through the full stack
+with no changes needed beyond what's already committed (`e09a65b`).
+
+`docker images`: `ssl-el-sslel` is ~11GB (vs. `ssl-el`'s ~9.93GB -- the rSim
+build adds a bit less than 1.1GB, mostly the ODE dev toolchain artifacts
+retained in the layer).
+
+To use it: `SSL_IMAGE=ssl-el-sslel bash bisect/run_ref.sh fix/relearn-and-offenses <budget> <label>`
+with `config.yaml`'s `use_sslel: true` and `field_type: 0` (run_ref.sh
+already reads `SSL_IMAGE` from the environment, defaulting to `ssl-el`).
+
+Not yet done: an actual training run on this field. The genuine SSL-EL field
+(4.5x3.0m) is meaningfully smaller than the 9x6m `field_type: 1` the
+confirmed-working grace-period result (`3c7b3fc`) trained on, and has
+different penalty-area proportions (`penalty_length=0.5`, `penalty_width=1.35`
+vs. the 9x6 field's `1.0`/`2.0`) -- worth treating as its own experiment
+with its own calibration, not assumed to behave the same.
+
+## Two rendering bugs found and fixed while recording the SSLEL video
+
+User reported the recorded SSLEL video still looked like the big field.
+Investigated and found two separate, real bugs -- neither in the physics
+(`env.field` was already correctly reporting 4.5x3.0m), both in rendering:
+
+1. **`SSLRenderField` (`rsoccer_gym.Render`) has hardcoded class constants**
+   (`length=9, width=6, penalty_length=1, penalty_width=2, goal_width=1,
+   _scale=100`), completely disconnected from whatever field the simulator
+   is actually running. Every rendered boundary/goal/penalty-box line always
+   assumed the 9x6m field, regardless of `robosim` class or `field_type`.
+   This was invisible everywhere else in the project because `field_type=1`
+   on `robosim.SSL` happens to *also* be 9x6m -- a coincidence that breaks
+   for `SSLEL`'s genuinely different 4.5x3.0m field. Confirmed by reading
+   `VSSRenderField.__init__` (the base class): it computes `center_x`,
+   `margin`, `screen_width`/`screen_height`, `window_size` from these class
+   attributes **at construction time** -- so a post-construction instance
+   attribute tweak wouldn't have worked; the class attributes have to be
+   correct *before* `SSLBaseEnv.__init__` builds `self.field_renderer`.
+   Fixed by extending `_use_sslel_simulator()` (`src/simulators/rsoccer.py`)
+   to also temporarily patch `SSLRenderField`'s six field-shape class
+   attributes to the real `SSLEL` field_type=0 values, restored afterward --
+   same scoped, reversible pattern as the `RSimSSL` -> `RSimSSLEL` swap, and
+   for the same reason (a blanket permanent patch would affect the standard
+   9x6m path too, even though it's a no-op there since the values happen to
+   already match).
+
+2. **`SSLBaseEnv.metadata["render_fps"]` is hardcoded to `60`**, independent
+   of the `fps` this project actually configures (`30`). gymnasium's
+   `VideoRecorder` reads `env.metadata["render_fps"]` (not the env's real
+   step rate) to decide video playback speed, so every recording played back
+   **2x too fast** -- 450 real simulation steps (15s at the configured
+   30fps) got encoded as if they were 60fps, producing a 7.5s video. This is
+   a general bug, not SSLEL-specific -- it affects any recording of this
+   env, though it happened to be invisible when going through certain
+   wrapper chains before (not fully root-caused why `record_checkpoint.py`'s
+   earlier goal2b recording read back with the "right" duration -- possibly
+   `StackWrapper`/`MultiAgentEnv`'s own class-level `metadata` shadowing
+   `SSLBaseEnv`'s in that specific attribute-lookup path; not chased down
+   further since the fix is correct and general regardless). Fixed directly
+   in `SSLMultiAgentEnv.__init__` (`src/simulators/rsoccer.py`): sets
+   `self.metadata = {**self.metadata, "render_fps": fps}` on the instance
+   (a new dict, not mutating the shared class-level one) right after
+   `super().__init__()`, so every env instance's declared render_fps always
+   matches whatever `fps` it was actually constructed with.
+
+Verified: re-recorded after each fix -- window size confirmed correct
+(520x370 for the SSLEL field vs. 970x670 for the standard 9x6m field, and
+independently constructing one of each in the same process confirms the
+scoped patch doesn't cross-contaminate), and video duration now matches the
+configured `match_time` exactly (15.0s for `match_time=15`, was 7.5s before
+the fps fix).
+
+`record_sslel_env.py`: a small script recording the SSLEL env with random
+actions (no trained checkpoint exists for this field yet) -- useful as a
+quick visual/geometry sanity check independent of any policy.
