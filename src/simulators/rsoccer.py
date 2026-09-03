@@ -1,7 +1,9 @@
+import contextlib
 import numpy as np
 from gymnasium.spaces import Box, Dict
 from gymnasium.wrappers.record_video import RecordVideo
 
+import rsoccer_gym.ssl.ssl_gym_base as ssl_gym_base
 from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
 from rsoccer_gym.Entities import Robot as SimRobot
 from collections import namedtuple
@@ -12,6 +14,23 @@ from src.objects import Ball, Frame, Robot
 from src.utils.geometry import Geometry2D
 from src.judges.ssl_judge import Judge
 from src.objects import Robot, Config, InitialPosition
+from src.simulators.rsim_sslel import RSimSSLEL
+
+
+@contextlib.contextmanager
+def _use_sslel_simulator():
+    """Temporarily point SSLBaseEnv's simulator construction at
+    robosim.SSLEL (the team's own small-field simulator, see rsim_sslel.py)
+    instead of the generic robosim.SSL, only for the duration of the
+    SSLBaseEnv.__init__() call this wraps. Scoped and reversible -- no other
+    env construction anywhere else is affected, and this repo's own vendored
+    ssl_gym_base module is never modified on disk."""
+    original = ssl_gym_base.RSimSSL
+    ssl_gym_base.RSimSSL = RSimSSLEL
+    try:
+        yield
+    finally:
+        ssl_gym_base.RSimSSL = original
 
 
 class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
@@ -19,7 +38,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
     def __init__(self,
         judge: Judge,
         init_pos,
-        field_type=2, 
+        field_type=2,
         fps=40,
         match_time=40,
         render_mode='human',
@@ -27,11 +46,13 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         sparse_rewards = {},
         possession_radius_scale=3,
         direction_change_threshold=1,
+        use_sslel=False,
         **kwargs
     ):
 
         self.class_judge = judge
         self.init_pos = init_pos
+        self.use_sslel = use_sslel
         if isinstance(init_pos, dict):
             self.init_pos = InitialPosition(**init_pos)
         
@@ -42,13 +63,14 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         
         self.score = {'blue': 0, 'yellow': 0}
         self.render_mode = render_mode
-        super().__init__(
-            field_type=field_type, 
-            n_robots_blue=self.n_robots_blue,
-            n_robots_yellow=self.n_robots_yellow, 
-            time_step=1/fps,
-            render_mode=render_mode
-        )
+        with _use_sslel_simulator() if use_sslel else contextlib.nullcontext():
+            super().__init__(
+                field_type=field_type,
+                n_robots_blue=self.n_robots_blue,
+                n_robots_yellow=self.n_robots_yellow,
+                time_step=1/fps,
+                render_mode=render_mode
+            )
 
         self.score = {'blue': 0, 'yellow': 0}
         self.field_info = {

@@ -52,6 +52,15 @@ env:
       3: [ 2.0, -1.0,  180.0]
     ball: [0, 0]
   field_type: 1
+  # use_sslel: true switches to robosim.SSLEL (the team's own small-field
+  # simulator, built from github.com/Pequi-Mecanico-SSL/rSim) instead of the
+  # generic robosim.SSL. field_type then means something DIFFERENT: SSLEL's
+  # own numbering only supports field_type=0 (4.5x3.0m, 3v3, the genuine
+  # SSL-EL field) for this project's fixed 3v3 setup -- 1/2 are 6v6 configs
+  # and will raise an error. Requires the image's robosim to have been built
+  # from that repo (not just the standard rc-robosim wheel, which lacks
+  # SSLEL) -- see RELEARN_NOTES.md.
+  use_sslel: false
   stack_size: 8 # número de frames empilhados na observação
   fps: 30 # frames por segundo
   match_time: 20 # duração da partida em segundos
