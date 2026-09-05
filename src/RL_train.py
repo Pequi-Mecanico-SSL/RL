@@ -288,6 +288,16 @@ if __name__ == "__main__":
             local_dir=os.path.abspath("volume"),
             #resume=True,
             restore=file_configs["checkpoint_restore"],
+            # Confirmed (see RELEARN_NOTES.md): a rare, stochastic RLlib-
+            # internal GAE-postprocessing bug (compute_advantages, a
+            # rewards/value-predictions length mismatch during episode
+            # postprocessing) can crash a trial after anywhere from ~135K to
+            # ~2.5M timesteps of otherwise-normal training. Root cause is
+            # inside RLlib itself, not this project's env/reward code.
+            # max_failures lets Tune auto-restart the trial (from its last
+            # checkpoint if one exists, from scratch otherwise) instead of
+            # aborting the whole run on the first occurrence.
+            max_failures=5,
         )
     except Exception as e:
         latest_experiment = find_latest_experiment(parent_directory)
