@@ -33,8 +33,17 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir setuptools==65.5.0 pip==21 wheel==0.38.0
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar rSim
-#RUN pip install git+https://github.com/Pequi-Mecanico-SSL/rSim.git
+# Instalar rSim (adiciona robosim.SSLEL, o simulador com o campo SSL-EL real
+# de 4.5x3.0m -- ver src/simulators/rsim_sslel.py e RELEARN_NOTES.md).
+# pip's isolated build env auto-installs the latest `cmake` PyPI package,
+# which hard-removed compatibility with the old (<3.5) cmake_minimum_required
+# this repo's pinned pybind11 v2.9.1 declares -- pin cmake<4 for the build
+# only (this is very likely the "make version" issue previously worked
+# around by hand; see RELEARN_NOTES.md for the diagnosis).
+RUN echo "cmake<4" > /tmp/rsim-build-constraint.txt && \
+    PIP_CONSTRAINT=/tmp/rsim-build-constraint.txt \
+    pip install --no-cache-dir git+https://github.com/Pequi-Mecanico-SSL/rSim.git && \
+    rm /tmp/rsim-build-constraint.txt
 
 RUN mkdir videos
 COPY patches/gymnasium/record_video.py ../usr/local/lib/python3.10/site-packages/gymnasium/wrappers/record_video.py
