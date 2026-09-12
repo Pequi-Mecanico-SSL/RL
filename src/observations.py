@@ -28,13 +28,13 @@ def positions_observations(main_idx: str, main: dict, allys: list[dict], advs: l
 def oritations_observations(main_idx: str, main: dict, allys: list[dict], advs: list[dict], ball: dict, **kwargs):
     orientations = np.zeros(0)
     for robot in [main] + allys + advs:
-        theta, sin, cos = (
-            np.deg2rad(robot['theta'])/(2*np.pi), 
-            np.sin(np.deg2rad(robot['theta'])), 
-            np.cos(np.deg2rad(robot['theta']))
-        )
+        sin, cos = np.sin(np.deg2rad(robot['theta'])), np.cos(np.deg2rad(robot['theta']))
+        # RELEARN: theta via arctan2(sin, cos)/pi (not raw deg2rad(theta)/(2*pi)) so the
+        # feature is periodic-safe -- a raw division disagrees by a full period between a
+        # negative theta and its mirrored [0, 360) counterpart, breaking yellow/blue symmetry
+        theta = np.arctan2(sin, cos) / np.pi
         orientations = np.hstack([orientations, [sin, cos, theta]])
-        
+
     return orientations
 
 

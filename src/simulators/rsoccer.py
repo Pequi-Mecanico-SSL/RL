@@ -1,9 +1,12 @@
+import contextlib
 import numpy as np
 from gymnasium.spaces import Box, Dict
 from gymnasium.wrappers.record_video import RecordVideo
 
+import rsoccer_gym.ssl.ssl_gym_base as ssl_gym_base
 from rsoccer_gym.ssl.ssl_gym_base import SSLBaseEnv
 from rsoccer_gym.Entities import Robot as SimRobot
+from rsoccer_gym.Render import SSLRenderField
 from collections import namedtuple
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
@@ -12,6 +15,76 @@ from src.objects import Ball, Frame, Robot
 from src.utils.geometry import Geometry2D
 from src.judges.ssl_judge import Judge
 from src.objects import Robot, Config, InitialPosition
+from src.simulators.rsim_sslel import RSimSSLEL
+
+# robosim.SSLEL's field_type=0 dimensions (src/robosim/sslelconfig.h in the
+# rSim repo), duplicated here only for the renderer -- see
+# _use_sslel_simulator's docstring for why this can't just read self.field.
+_SSLEL_RENDER_DIMENSIONS = dict(
+    length=4.50, width=3.00, penalty_length=0.50, penalty_width=1.35,
+    goal_width=0.80, goal_depth=0.18,
+)
+
+# SSLRenderField also has purely-cosmetic constants with NO equivalent in
+# get_field_params() at all (center_circle_r, corner_arc_r, margin,
+# goal_area_length/width) -- the simulator has no opinion on them, they're a
+# rendering-only choice. Fixing only _SSLEL_RENDER_DIMENSIONS above leaves
+# these at the standard field's absolute values, which is wrong on a field
+# half the size: e.g. a 1m-radius center circle (fine on a 9m-long field)
+# eats 44% of a 4.5m-long field, dwarfing everything else in the frame. No
+# authoritative SSL-EL spec for these exists (rSim's own SSLELConfig::Field
+# doesn't define them either), so scale them by the same ratio the real
+# field dimensions shrink by, using SSLRenderField's own un-patched defaults
+# as the reference -- keeps every rendered element proportionally
+# consistent with each other, matching how the standard-field rendering
+# already looks.
+_SSLEL_COSMETIC_SCALE = _SSLEL_RENDER_DIMENSIONS["length"] / SSLRenderField.length
+_SSLEL_RENDER_DIMENSIONS.update(
+    margin=SSLRenderField.margin * _SSLEL_COSMETIC_SCALE,
+    center_circle_r=SSLRenderField.center_circle_r * _SSLEL_COSMETIC_SCALE,
+    corner_arc_r=SSLRenderField.corner_arc_r * _SSLEL_COSMETIC_SCALE,
+    goal_area_length=SSLRenderField.goal_area_length * _SSLEL_COSMETIC_SCALE,
+    goal_area_width=SSLRenderField.goal_area_width * _SSLEL_COSMETIC_SCALE,
+)
+
+
+@contextlib.contextmanager
+def _use_sslel_simulator():
+    """Temporarily point SSLBaseEnv's simulator construction at
+    robosim.SSLEL (the team's own small-field simulator, see rsim_sslel.py)
+    instead of the generic robosim.SSL, only for the duration of the
+    SSLBaseEnv.__init__() call this wraps. Scoped and reversible -- no other
+    env construction anywhere else is affected, and this repo's own vendored
+    ssl_gym_base module is never modified on disk.
+
+    Also patches SSLRenderField's class attributes to match, for the same
+    duration. SSLRenderField.length/width/penalty_length/... are HARDCODED
+    class constants (rsoccer_gym.Render.SSLRenderField), not derived from
+    the actual simulated field at all -- every render (boundary lines, goal,
+    penalty box, center circle, corner arcs) always assumes the 9x6m field
+    regardless of which robosim class/field_type is actually simulating.
+    This went unnoticed everywhere else in this project because field_type=1
+    on robosim.SSL happens to also be 9x6m -- a coincidence that breaks for
+    SSLEL's genuinely different 4.5x3.0m field. VSSRenderField.__init__ (the
+    base class) computes derived values (center_x, margin, screen size)
+    from these class attributes AT CONSTRUCTION TIME, so this must be
+    patched *before* SSLBaseEnv.__init__ constructs self.field_renderer --
+    patching self.field_renderer's instance attributes afterward would not
+    recompute them.
+    """
+    original_rsim = ssl_gym_base.RSimSSL
+    original_render_attrs = {
+        k: getattr(SSLRenderField, k) for k in _SSLEL_RENDER_DIMENSIONS
+    }
+    ssl_gym_base.RSimSSL = RSimSSLEL
+    for k, v in _SSLEL_RENDER_DIMENSIONS.items():
+        setattr(SSLRenderField, k, v)
+    try:
+        yield
+    finally:
+        ssl_gym_base.RSimSSL = original_rsim
+        for k, v in original_render_attrs.items():
+            setattr(SSLRenderField, k, v)
 
 
 class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
@@ -19,7 +92,7 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
     def __init__(self,
         judge: Judge,
         init_pos,
-        field_type=2, 
+        field_type=2,
         fps=40,
         match_time=40,
         render_mode='human',
@@ -27,11 +100,13 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         sparse_rewards = {},
         possession_radius_scale=3,
         direction_change_threshold=1,
+        use_sslel=False,
         **kwargs
     ):
 
         self.class_judge = judge
         self.init_pos = init_pos
+        self.use_sslel = use_sslel
         if isinstance(init_pos, dict):
             self.init_pos = InitialPosition(**init_pos)
         
@@ -42,13 +117,23 @@ class SSLMultiAgentEnv(SSLBaseEnv, MultiAgentEnv):
         
         self.score = {'blue': 0, 'yellow': 0}
         self.render_mode = render_mode
-        super().__init__(
-            field_type=field_type, 
-            n_robots_blue=self.n_robots_blue,
-            n_robots_yellow=self.n_robots_yellow, 
-            time_step=1/fps,
-            render_mode=render_mode
-        )
+        with _use_sslel_simulator() if use_sslel else contextlib.nullcontext():
+            super().__init__(
+                field_type=field_type,
+                n_robots_blue=self.n_robots_blue,
+                n_robots_yellow=self.n_robots_yellow,
+                time_step=1/fps,
+                render_mode=render_mode
+            )
+        # BUG FIX: SSLBaseEnv.metadata["render_fps"] is hardcoded to 60,
+        # independent of the `fps` this env is actually configured with.
+        # gymnasium's VideoRecorder reads env.metadata["render_fps"] (not the
+        # env's own step rate) to decide playback speed, so any recording
+        # played back at the wrong speed relative to the simulated match
+        # time (e.g. a 30fps sim encoded as if it were 60fps -- half as long
+        # as it should be). Set on the instance (new dict, not mutating the
+        # shared class-level one) so it doesn't affect other env instances.
+        self.metadata = {**self.metadata, "render_fps": fps}
 
         self.score = {'blue': 0, 'yellow': 0}
         self.field_info = {
